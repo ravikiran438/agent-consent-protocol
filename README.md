@@ -39,7 +39,7 @@ acting and here is my reasoning").
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                        ACAP Layer                            │
+│                        ACAP Layer                           │
 │   PolicyDocument · AgentConsentRecord · AdherenceEvent      │
 ├─────────────────────────────────────────────────────────────┤
 │                        AP2 Layer  (optional peer)           │

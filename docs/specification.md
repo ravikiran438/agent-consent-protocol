@@ -10,53 +10,55 @@
 
 ## Table of Contents
 
-1. [Introduction](#1-introduction)
-   1. [Goals](#11-goals)
-   2. [Guiding Principles](#12-guiding-principles)
-   3. [Relationship to A2A and AP2](#13-relationship-to-a2a-and-ap2)
-   4. [Specification Structure](#14-specification-structure)
-2. [Terminology](#2-terminology)
-3. [The Consent Gap in A2A](#3-the-consent-gap-in-a2a)
-   1. [Why Auth Policy Alone Is Insufficient](#31-why-auth-policy-alone-is-insufficient)
-   2. [Proof of Acceptance vs. Proof of Adherence](#32-proof-of-acceptance-vs-proof-of-adherence)
-   3. [UETA §14 and Agent Liability](#33-ueta-14-and-agent-liability)
-4. [Data Model](#4-data-model)
-   1. [PolicyDocument](#41-policydocument)
-   2. [PolicyClaim](#42-policyclaim)
-   3. [UsagePolicyRef](#43-usagepolicyref)
-   4. [AgentConsentRecord](#44-agentconsentrecord)
-   5. [ParsedClaim](#45-parsedclaim)
-   6. [AdherenceEvent](#46-adherenceevent)
-5. [Protocol Operations](#5-protocol-operations)
-   1. [GetPolicy](#51-getpolicy)
-   2. [RecordConsent](#52-recordconsent)
-   3. [GetConsentRecord](#53-getconsentrecord)
-   4. [ListConsentHistory](#54-listconsenthistory)
-   5. [RecordAdherence](#55-recordadherence)
-   6. [ListAdherenceEvents](#56-listadherenceevents)
-   7. [CheckAdherence](#57-checkadherence)
-6. [Agent Card Extension](#6-agent-card-extension)
-   1. [Extension Declaration](#61-extension-declaration)
-   2. [UsagePolicyRef Field](#62-usagepolicref-field)
-   3. [Well-Known URL](#63-well-known-url)
-7. [Consent Handshake Flow](#7-consent-handshake-flow)
-   1. [Initial Handshake](#71-initial-handshake)
-   2. [Version Bump Re-Acceptance](#72-version-bump-re-acceptance)
-   3. [Skill Invocation with Adherence Recording](#73-skill-invocation-with-adherence-recording)
-8. [Policy Versioning](#8-policy-versioning)
-   1. [Semantic Versioning Rules](#81-semantic-versioning-rules)
-   2. [Material vs. Non-Material Changes](#82-material-vs-non-material-changes)
-   3. [Version Bump Invalidation](#83-version-bump-invalidation)
-9. [Consent Record Chain](#9-consent-record-chain)
-   1. [Linked List Structure](#91-linked-list-structure)
-   2. [Chain Integrity Verification](#92-chain-integrity-verification)
-   3. [Storage Requirements](#93-storage-requirements)
-10. [Cryptographic Signatures](#10-cryptographic-signatures)
-11. [ODRL Vocabulary Alignment](#11-odrl-vocabulary-alignment)
-12. [Security Considerations](#12-security-considerations)
-13. [Privacy Considerations](#13-privacy-considerations)
-14. [Normative References](#14-normative-references)
-15. [Informative References](#15-informative-references)
+- [Agent Consent and Adherence Protocol (ACAP) Specification](#agent-consent-and-adherence-protocol-acap-specification)
+  - [Table of Contents](#table-of-contents)
+  - [1. Introduction](#1-introduction)
+    - [1.1 Goals](#11-goals)
+    - [1.2 Guiding Principles](#12-guiding-principles)
+    - [1.3 Relationship to A2A and AP2](#13-relationship-to-a2a-and-ap2)
+    - [1.4 Specification Structure](#14-specification-structure)
+  - [2. Terminology](#2-terminology)
+  - [3. The Consent Gap in A2A](#3-the-consent-gap-in-a2a)
+    - [3.1 Why Auth Policy Alone Is Insufficient](#31-why-auth-policy-alone-is-insufficient)
+    - [3.2 Proof of Acceptance vs. Proof of Adherence](#32-proof-of-acceptance-vs-proof-of-adherence)
+    - [3.3 UETA §14 and Agent Liability](#33-ueta-14-and-agent-liability)
+  - [4. Data Model](#4-data-model)
+    - [4.1 PolicyDocument](#41-policydocument)
+    - [4.2 PolicyClaim](#42-policyclaim)
+    - [4.3 UsagePolicyRef](#43-usagepolicyref)
+    - [4.4 AgentConsentRecord](#44-agentconsentrecord)
+    - [4.5 ParsedClaim](#45-parsedclaim)
+    - [4.6 AdherenceEvent](#46-adherenceevent)
+  - [5. Protocol Operations](#5-protocol-operations)
+    - [5.1 GetPolicy](#51-getpolicy)
+    - [5.2 RecordConsent](#52-recordconsent)
+    - [5.3 GetConsentRecord](#53-getconsentrecord)
+    - [5.4 ListConsentHistory](#54-listconsenthistory)
+    - [5.5 RecordAdherence](#55-recordadherence)
+    - [5.6 ListAdherenceEvents](#56-listadherenceevents)
+    - [5.7 CheckAdherence](#57-checkadherence)
+  - [6. Agent Card Extension](#6-agent-card-extension)
+    - [6.1 Extension Declaration](#61-extension-declaration)
+    - [6.2 UsagePolicyRef Field](#62-usagepolicyref-field)
+    - [6.3 Well-Known URL](#63-well-known-url)
+  - [7. Consent Handshake Flow](#7-consent-handshake-flow)
+    - [7.1 Initial Handshake](#71-initial-handshake)
+    - [7.2 Version Bump Re-Acceptance](#72-version-bump-re-acceptance)
+    - [7.3 Skill Invocation with Adherence Recording](#73-skill-invocation-with-adherence-recording)
+  - [8. Policy Versioning](#8-policy-versioning)
+    - [8.1 Semantic Versioning Rules](#81-semantic-versioning-rules)
+    - [8.2 Material vs. Non-Material Changes](#82-material-vs-non-material-changes)
+    - [8.3 Version Bump Invalidation](#83-version-bump-invalidation)
+  - [9. Consent Record Chain](#9-consent-record-chain)
+    - [9.1 Linked List Structure](#91-linked-list-structure)
+    - [9.2 Chain Integrity Verification](#92-chain-integrity-verification)
+    - [9.3 Storage Requirements](#93-storage-requirements)
+  - [10. Cryptographic Signatures](#10-cryptographic-signatures)
+  - [11. ODRL Vocabulary Alignment](#11-odrl-vocabulary-alignment)
+  - [12. Security Considerations](#12-security-considerations)
+  - [13. Privacy Considerations](#13-privacy-considerations)
+  - [14. Normative References](#14-normative-references)
+  - [15. Informative References](#15-informative-references)
 
 ---
 
@@ -128,7 +130,7 @@ else is derived.
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                        ACAP Layer                            │
+│                        ACAP Layer                           │
 │   PolicyDocument · AgentConsentRecord · AdherenceEvent      │
 │   (What agents may do and the proof that they did it right) │
 ├─────────────────────────────────────────────────────────────┤
@@ -229,12 +231,12 @@ two layers are complementary, not substitutable.
 ### 3.2 Proof of Acceptance vs. Proof of Adherence
 
 | Dimension          | Proof of Acceptance (human) | Proof of Adherence (ACAP)           |
-|--------------------|-----------------------------|------------------------------------|
-| Granularity        | Whole document              | Per-clause, per-action             |
-| Timing             | At signup / version bump    | At every skill invocation          |
-| Content            | Timestamp + identity        | Clause citation + reasoning string |
-| Understanding      | Assumed (click-through)     | Verified (parsed_claims)           |
-| Subsequent compliance | Unverifiable             | Auditable via adherence trail      |
+|--------------------|-----------------------------|-------------------------------------|
+| Granularity        | Whole document              | Per-clause, per-action              |
+| Timing             | At signup / version bump    | At every skill invocation           |
+| Content            | Timestamp + identity        | Clause citation + reasoning string  |
+| Understanding      | Assumed (click-through)     | Verified (parsed_claims)            |
+| Subsequent compliance | Unverifiable             | Auditable via adherence trail       |
 | Legal value        | Proves acceptance           | Proves acceptance **and** adherence |
 
 ACAP generates proof of adherence by requiring calling agents to:
@@ -591,28 +593,28 @@ The response MUST:
 ### 7.1 Initial Handshake
 
 ```
-Calling Agent                           Callee Agent
-     │                                       │
-     │── GET /.well-known/usage-policy.json ─►│
-     │◄─ PolicyDocument (version 2.1.0) ─────│
-     │                                       │
-     │  [parse all PolicyClaims]             │
-     │  [build ParsedClaim list]             │
-     │  [decide: accepted / rejected /       │
-     │           conditional]                │
-     │                                       │
+Calling Agent                             Callee Agent
+     │                                         │
+     │── GET /.well-known/usage-policy.json ──►│
+     │◄─ PolicyDocument (version 2.1.0) ───────│
+     │                                         │
+     │  [parse all PolicyClaims]               │
+     │  [build ParsedClaim list]               │
+     │  [decide: accepted / rejected /         │
+     │           conditional]                  │
+     │                                         │
      │── POST /acap/consent ──────────────────►│
-     │   AgentConsentRecord                  │
-     │◄─ RecordConsentResponse ──────────────│
-     │   { record_id: "019500a0-...",        │
-     │     supersedes_prior: false }         │
-     │                                       │
-     │  [if decision == accepted or          │
-     │   conditional → proceed to skills]    │
-     │                                       │
-     │── POST /a2a (skill invocation) ───────►│
-     │   [also POST /acap/adherence for       │
-     │    each action attempted]             │
+     │   AgentConsentRecord                    │
+     │◄─ RecordConsentResponse ────────────────│
+     │   { record_id: "019500a0-...",          │
+     │     supersedes_prior: false }           │
+     │                                         │
+     │  [if decision == accepted or            │
+     │   conditional → proceed to skills]      │
+     │                                         │
+     │── POST /a2a (skill invocation) ────────►│
+     │   [also POST /acap/adherence for        │
+     │    each action attempted]               │
 ```
 
 ### 7.2 Version Bump Re-Acceptance
