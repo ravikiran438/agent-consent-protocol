@@ -1,0 +1,63 @@
+{
+  "version": "2.1.0",
+  "document_uri": "https://data-agent.example.com/.well-known/usage-policy.json",
+  "document_hash": "sha256:a3f5c27d8e1b49023cc6d7f4a0b92e15d6780c31f4a2b58e9c7d0a1f3e6b8c2",
+  "effective_date": "2026-02-27T00:00:00Z",
+  "supersedes": "2.0.0",
+  "change_summary": "§3.4 now prohibits cross-session PII aggregation; §5.1 adds notification obligation for tasks exceeding cost threshold",
+  "publisher": "did:web:data-agent.example.com",
+  "natural_language_uri": "https://data-agent.example.com/terms",
+  "jurisdictions": ["GDPR", "CCPA"],
+  "claims": [
+    {
+      "claim_id": "3f7a1b2c-0001-7000-8000-000000000001",
+      "clause_ref": "§2.1",
+      "action": "odrl:use",
+      "asset": "a2a:task_output",
+      "rule_type": "permission",
+      "constraint": null,
+      "effective_version": "1.0.0",
+      "escalate_on_deny": null
+    },
+    {
+      "claim_id": "3f7a1b2c-0001-7000-8000-000000000002",
+      "clause_ref": "§3.4",
+      "action": "odrl:aggregate",
+      "asset": "pii:session_data",
+      "rule_type": "prohibition",
+      "constraint": "odrl:purpose isNot behavioral_profiling",
+      "effective_version": "2.1.0",
+      "escalate_on_deny": true
+    },
+    {
+      "claim_id": "3f7a1b2c-0001-7000-8000-000000000003",
+      "clause_ref": "§4.2",
+      "action": "a2a:share_output",
+      "asset": "a2a:task_output",
+      "rule_type": "prohibition",
+      "constraint": "a2a:recipient_type isNot principal_authorized_agent",
+      "effective_version": "1.5.0",
+      "escalate_on_deny": false
+    },
+    {
+      "claim_id": "3f7a1b2c-0001-7000-8000-000000000004",
+      "clause_ref": "§5.1",
+      "action": "a2a:notify_principal",
+      "asset": "odrl:All",
+      "rule_type": "obligation",
+      "constraint": "a2a:task_cost greaterThan 100",
+      "effective_version": "2.1.0",
+      "escalate_on_deny": null
+    },
+    {
+      "claim_id": "3f7a1b2c-0001-7000-8000-000000000005",
+      "clause_ref": "§6.3",
+      "action": "a2a:store_output",
+      "asset": "a2a:task_context",
+      "rule_type": "prohibition",
+      "constraint": "a2a:retention_days greaterThan 90",
+      "effective_version": "1.0.0",
+      "escalate_on_deny": false
+    }
+  ]
+}

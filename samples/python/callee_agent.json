@@ -1,0 +1,85 @@
+{
+  "name": "DataAnalysisAgent",
+  "description": "Analyses structured datasets and produces insights. Governed by ACAP usage policy v2.1.0.",
+  "url": "https://data-agent.example.com/a2a",
+  "preferredTransport": "JSONRPC",
+  "protocolVersion": "0.3.0",
+  "version": "1.4.0",
+  "defaultInputModes": ["application/json"],
+  "defaultOutputModes": ["application/json"],
+  "provider": {
+    "organization": "Example Corp",
+    "url": "https://example.com"
+  },
+  "documentationUrl": "https://data-agent.example.com/docs",
+  "capabilities": {
+    "extensions": [
+      {
+        "uri": "https://github.com/ravikiran438/agent-consent-protocol/v1",
+        "description": "Supports ACAP. Calling agents MUST record consent before invoking any skill.",
+        "required": true
+      }
+    ]
+  },
+  "usage_policy": {
+    "version": "2.1.0",
+    "document_uri": "https://data-agent.example.com/.well-known/usage-policy.json",
+    "document_hash": "sha256:a3f5c27d8e1b49023cc6d7f4a0b92e15d6780c31f4a2b58e9c7d0a1f3e6b8c2",
+    "effective_date": "2026-02-27T00:00:00Z",
+    "acceptance_required": true,
+    "acceptance_endpoint": "https://data-agent.example.com/acap/consent",
+    "supersedes": "2.0.0",
+    "change_summary": "§3.4 now prohibits cross-session PII aggregation; §5.1 adds notification obligation for tasks exceeding cost threshold",
+    "natural_language_uri": "https://data-agent.example.com/terms"
+  },
+  "securitySchemes": {
+    "oauth2": {
+      "type": "oauth2",
+      "flows": {
+        "clientCredentials": {
+          "tokenUrl": "https://auth.example.com/oauth2/token",
+          "scopes": {
+            "data:read": "Read access to datasets",
+            "data:analyse": "Run analysis tasks"
+          }
+        }
+      }
+    }
+  },
+  "security": [
+    { "oauth2": ["data:read", "data:analyse"] }
+  ],
+  "skills": [
+    {
+      "id": "analyse_dataset",
+      "name": "Analyse Dataset",
+      "description": "Runs statistical analysis on a provided dataset. Governed by §2.1 (permitted) and §3.4 (PII aggregate prohibition).",
+      "tags": ["analysis", "statistics", "data"],
+      "inputModes": ["application/json"],
+      "outputModes": ["application/json"],
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "dataset_id": {
+            "type": "string",
+            "description": "Identifier of the dataset to analyse."
+          },
+          "analysis_type": {
+            "type": "string",
+            "enum": ["summary", "correlation", "trend"],
+            "description": "Type of analysis to perform."
+          }
+        },
+        "required": ["dataset_id", "analysis_type"]
+      }
+    },
+    {
+      "id": "export_results",
+      "name": "Export Results",
+      "description": "Exports analysis results. §4.2 requires results not be shared with third agents without explicit permission.",
+      "tags": ["export", "results"],
+      "inputModes": ["application/json"],
+      "outputModes": ["application/json"]
+    }
+  ]
+}
