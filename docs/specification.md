@@ -3,7 +3,7 @@
 **Version:** 0.1.0-draft
 **Status:** Draft
 **Published:** 2026-03-03
-**Extension URI:** `https://a2aproject.github.io/consent/v1`
+**Extension URI:** `https://github.com/ravikiran438/agent-consent-protocol/v1`
 **Normative definition:** [`specification/consent.proto`](../specification/consent.proto)
 
 ---
@@ -551,7 +551,7 @@ Callee agents declare ACAP support by adding the ACAP extension URI to
   "capabilities": {
     "extensions": [
       {
-        "uri": "https://a2aproject.github.io/consent/v1",
+        "uri": "https://github.com/ravikiran438/agent-consent-protocol/v1",
         "description": "Supports the Agent Consent Protocol.",
         "required": true
       }

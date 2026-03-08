@@ -1,12 +1,18 @@
 # Agent Consent and Adherence Protocol (ACAP)
 
 **Status:** Draft v0.1.0
-**Extension URI:** `https://a2aproject.github.io/consent/v1`
+**Paper:** [Anumati: Proof of Adherence as a Formal Consent Model for Autonomous Agent Protocols](https://arxiv.org/abs/2503.XXXXX) *(arXiv ID to be filled when live)*
+**Extension URI:** `https://github.com/ravikiran438/agent-consent-protocol/v1`
 **License:** Apache 2.0
 
 ACAP extends the [Agent2Agent (A2A) Protocol](https://a2a-protocol.org/latest/)
 with a first-class mechanism for versioned, machine-readable usage policy
 attachment and append-only consent auditing between AI agents.
+
+> **Companion protocol:** [Phala](https://arxiv.org/abs/forthcoming) addresses
+> the outcome feedback side of the same lifecycle. ACAP governs entry — the
+> conditions under which an agent may act. Phala measures exit — whether the
+> action served the principal. Together they bracket agent accountability.
 
 ## The Problem
 
@@ -60,7 +66,7 @@ acting and here is my reasoning").
   "capabilities": {
     "extensions": [
       {
-        "uri": "https://a2aproject.github.io/consent/v1",
+        "uri": "https://github.com/ravikiran438/agent-consent-protocol/v1",
         "description": "Supports the Agent Consent Protocol.",
         "required": true
       }

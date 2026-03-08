@@ -26,7 +26,6 @@
  *   S3  AdherenceAnchored
  *   S4  SkillRequiresPermit
  *   S5  ConditionalGating
- *   S6  NoDisputedPermit
  *   S7  NoSkillOnCapabilityDrift
  *   S8  GovernanceAlwaysReviews — no re-consent bypasses governance
  *   S9  HumanRequiredHonoured  — human_required tier blocks until human acts
@@ -388,9 +387,11 @@ NoSkillWithoutConsent ==
                (consentChain[i]).decision \in
                    {"accepted", "conditional"}
 
-(* S2: Consent chain is append-only. *)
+(* S2: Consent chain is append-only — its length never decreases.
+   Expressed as a temporal action property; checked under PROPERTIES
+   in TLC, not INVARIANTS. *)
 ChainMonotonicity ==
-    Len(consentChain) >= 0
+    [][Len(consentChain') >= Len(consentChain)]_consentChain
 
 (* S3: Every adherence event references a valid consent record. *)
 AdherenceAnchored ==
@@ -411,12 +412,6 @@ ConditionalGating ==
     \A i \in 1..Len(adherenceTrail):
         (adherenceTrail[i]).disputed = TRUE =>
             (adherenceTrail[i]).decision \in {"deny", "escalate"}
-
-(* S6: Equivalent to S5 — explicit check. *)
-NoDisputedPermit ==
-    \A i \in 1..Len(adherenceTrail):
-        (adherenceTrail[i]).disputed = TRUE =>
-            (adherenceTrail[i]).decision # "permit"
 
 (* S7: No skill call on capability drift. *)
 NoSkillOnCapabilityDrift ==

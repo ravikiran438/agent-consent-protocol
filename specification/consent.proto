@@ -44,7 +44,7 @@ option go_package = "github.com/a2aproject/consent/gen/go/consent/v1;consentv1";
 //
 // A PolicyDocument is referenced from the A2A AgentCard via the
 // capabilities.extensions mechanism using the ACAP extension URI:
-//   https://a2aproject.github.io/consent/v1
+//   https://github.com/ravikiran438/agent-consent-protocol/v1
 //
 // The document is hosted at a well-known URL (e.g.
 // /.well-known/usage-policy.json) and MUST be served over HTTPS.
