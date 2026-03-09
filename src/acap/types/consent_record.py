@@ -14,10 +14,10 @@
 
 """Consent record types for the Agent Consent and Adherence Protocol (ACAP).
 
-These types correspond to the AgentConsentRecord, ParsedClaim, and
+These types correspond to the ConsentRecord, ParsedClaim, and
 ConsentDecision messages in specification/consent.proto.
 
-The AgentConsentRecord is the foundational audit primitive of ACAP. Records
+The ConsentRecord is the foundational audit primitive of ACAP. Records
 form a singly-linked list (via prev_record_id) constituting the legally
 defensible consent chain for a caller-callee agent pair.
 
@@ -52,7 +52,7 @@ class ParsedClaim(BaseModel):
     """The calling agent's understanding of a single PolicyClaim.
 
     Every PolicyClaim in a PolicyDocument MUST have a corresponding ParsedClaim
-    in the AgentConsentRecord. This requirement ensures agents cannot silently
+    in the ConsentRecord. This requirement ensures agents cannot silently
     ignore inconvenient clauses.
     """
 
@@ -74,7 +74,7 @@ class ParsedClaim(BaseModel):
     )
 
 
-class AgentConsentRecord(BaseModel):
+class ConsentRecord(BaseModel):
     """An append-only entry in the per-agent-pair consent chain.
 
     Documents the calling agent's parsed understanding of and decision about

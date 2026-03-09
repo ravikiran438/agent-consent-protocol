@@ -1,7 +1,7 @@
 # Agent Consent and Adherence Protocol (ACAP)
 
 **Status:** Draft v0.1.0
-**Paper:** [Anumati: Proof of Adherence as a Formal Consent Model for Autonomous Agent Protocols](https://arxiv.org/abs/2503.XXXXX) *(arXiv ID to be filled when live)*
+**Paper:** [Anumati: Proof of Adherence as a Formal Consent Model for Autonomous Agent Protocols](https://arxiv.org/abs/2603.XXXXX) *(arXiv ID to be filled when live)*
 **Extension URI:** `https://github.com/ravikiran438/agent-consent-protocol/v1`
 **License:** Apache 2.0
 
@@ -9,7 +9,7 @@ ACAP extends the [Agent2Agent (A2A) Protocol](https://a2a-protocol.org/latest/)
 with a first-class mechanism for versioned, machine-readable usage policy
 attachment and append-only consent auditing between AI agents.
 
-> **Companion protocol:** [Phala](https://arxiv.org/abs/forthcoming) addresses
+> **Companion protocol:** [Phala](https://arxiv.org/abs/forthcoming) (in preparation) addresses
 > the outcome feedback side of the same lifecycle. ACAP governs entry — the
 > conditions under which an agent may act. Phala measures exit — whether the
 > action served the principal. Together they bracket agent accountability.
@@ -34,7 +34,7 @@ ACAP introduces three primitives:
 | Primitive             | What it records |
 |-----------------------|-----------------|
 | `PolicyDocument`      | The callee's versioned, machine-readable Terms of Service |
-| `AgentConsentRecord`  | The calling agent's parsed understanding and acceptance decision |
+| `ConsentRecord`  | The calling agent's parsed understanding and acceptance decision |
 | `AdherenceEvent`      | The calling agent's per-action policy evaluation with reasoning |
 
 Together they shift the consent model from **proof of acceptance**
@@ -46,7 +46,7 @@ acting and here is my reasoning").
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │                        ACAP Layer                           │
-│   PolicyDocument · AgentConsentRecord · AdherenceEvent      │
+│   PolicyDocument · ConsentRecord · AdherenceEvent      │
 ├─────────────────────────────────────────────────────────────┤
 │                        AP2 Layer  (optional peer)           │
 │   IntentMandate · CartMandate · PaymentMandate              │
@@ -110,9 +110,9 @@ acting and here is my reasoning").
 ### 3. Calling agent records consent before invoking skills
 
 ```python
-from acap.types import AgentConsentRecord, ParsedClaim, ConsentDecision
+from acap.types import ConsentRecord, ParsedClaim, ConsentDecision
 
-record = AgentConsentRecord(
+record = ConsentRecord(
     record_id="019500a0-0001-7000-8000-000000000001",
     caller_agent_id="did:web:caller.example.com",
     callee_agent_id="did:web:myagent.example.com",
@@ -143,13 +143,25 @@ ACAP/
 │   └── topics/                # Conceptual deep-dives
 ├── src/acap/types/            # Pydantic type library (Python)
 │   ├── policy_document.py     # PolicyDocument, PolicyClaim, UsagePolicyRef
-│   ├── consent_record.py      # AgentConsentRecord, ParsedClaim
+│   ├── consent_record.py      # ConsentRecord, ParsedClaim
 │   └── adherence_event.py     # AdherenceEvent, CheckAdherence*
 ├── samples/python/            # Reference agent.json with usage_policy
 └── adrs/                      # Architecture Decision Records
     ├── 001-usage-policy-as-agent-card-extension.md
     └── 002-proof-of-adherence-over-proof-of-acceptance.md
 ```
+
+## Formal Verification
+
+The protocol's core safety properties (chain integrity, consent-before-action,
+version-gated re-acceptance) are specified in TLA+ and verified with the TLC
+model checker. TLC exhaustively explores the state space within declared
+constants (e.g. `MaxAgents`, `MaxVersions`) but does **not** constitute a
+proof for arbitrary values. Unbounded verification would require a theorem
+prover such as TLAPS.
+
+The TLA+ specification is described in the companion paper
+([Anumati](https://arxiv.org/abs/2503.XXXXX), §5).
 
 ## Contributing
 

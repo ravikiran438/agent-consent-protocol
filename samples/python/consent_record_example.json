@@ -1,5 +1,5 @@
 {
-  "_comment": "Example AgentConsentRecord produced by a calling agent after parsing usage_policy.json v2.1.0. POSTed to acceptance_endpoint.",
+  "_comment": "Example ConsentRecord produced by a calling agent after parsing usage_policy.json v2.1.0. POSTed to acceptance_endpoint.",
   "record_id": "019500a0-0001-7000-8000-000000000001",
   "prev_record_id": "019499ff-0001-7000-8000-000000000099",
   "caller_agent_id": "did:web:orchestrator.example.com",

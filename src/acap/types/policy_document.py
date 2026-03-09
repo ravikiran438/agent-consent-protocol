@@ -186,7 +186,7 @@ class UsagePolicyRef(BaseModel):
     )
     acceptance_endpoint: Optional[str] = Field(
         default=None,
-        description="HTTPS endpoint at which callers POST an AgentConsentRecord. "
+        description="HTTPS endpoint at which callers POST a ConsentRecord. "
         "REQUIRED when acceptance_required is true.",
     )
     supersedes: Optional[str] = Field(

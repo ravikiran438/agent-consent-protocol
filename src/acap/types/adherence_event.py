@@ -52,7 +52,7 @@ class AdherenceEvent(BaseModel):
     Recorded by the calling agent immediately before invoking (or refusing to
     invoke) a callee skill. Events form a singly-linked list via prev_event_id.
 
-    Together with the AgentConsentRecord chain, AdherenceEvents constitute
+    Together with the ConsentRecord chain, AdherenceEvents constitute
     "proof of adherence": a reasoning trail that goes beyond mere
     "proof of acceptance" by documenting clause-level justifications.
 
@@ -70,7 +70,7 @@ class AdherenceEvent(BaseModel):
         "for this consent_record_id. Absent for the first event.",
     )
     consent_record_id: str = Field(
-        description="record_id of the AgentConsentRecord that authorises the "
+        description="record_id of the ConsentRecord that authorises the "
         "calling agent to interact with the callee.",
     )
     action: str = Field(
@@ -117,7 +117,7 @@ class CheckAdherenceRequest(BaseModel):
     """
 
     consent_record_id: str = Field(
-        description="record_id of the active AgentConsentRecord for this "
+        description="record_id of the active ConsentRecord for this "
         "caller-callee pair.",
     )
     action: str = Field(

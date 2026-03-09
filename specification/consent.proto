@@ -60,6 +60,8 @@ message PolicyDocument {
 
   // SHA-256 hex digest of the canonical JSON serialisation of this document.
   // Format: "sha256:<hex>". REQUIRED.
+  // Bootstrap convention: when computing the hash, the document_hash field
+  // itself MUST be set to the empty string ("") before hashing.
   string document_hash = 3;
 
   // ISO 8601 UTC datetime from which this version is effective. REQUIRED.
@@ -302,7 +304,7 @@ message UsagePolicyRef {
   // invoking any skill on this agent. REQUIRED.
   bool acceptance_required = 5;
 
-  // HTTPS endpoint at which callers POST an AgentConsentRecord to record
+  // HTTPS endpoint at which callers POST a ConsentRecord to record
   // acceptance. REQUIRED when acceptance_required is true.
   optional string acceptance_endpoint = 6;
 
@@ -494,7 +496,7 @@ message ComplianceObligation {
 // RegulatoryContext declares which regulatory framework applies and
 // what specific obligations it imposes in this context. Published by
 // the callee on PolicyDocument (callee's compliance context) and by
-// the caller on AgentConsentRecord (principal's compliance context).
+// the caller on ConsentRecord (principal's compliance context).
 //
 // When both parties declare regulatory contexts, the governance agent
 // applies the UNION of obligations — the stricter constraint wins for
@@ -596,7 +598,7 @@ message PolicyDiff {
 // Consent Record
 // ─────────────────────────────────────────────────────────────────────────────
 
-// AgentConsentRecord is an append-only entry in the per-agent-pair consent
+// ConsentRecord is an append-only entry in the per-agent-pair consent
 // chain. Each record documents the calling agent's parsed understanding of,
 // and decision about, a specific PolicyDocument version.
 //
@@ -608,7 +610,7 @@ message PolicyDiff {
 //       tool manifest, or reasoning configuration).
 //
 // Records SHOULD be stored by both parties and at a neutral audit endpoint.
-message AgentConsentRecord {
+message ConsentRecord {
   // UUIDv7 identifier for this record. REQUIRED.
   string record_id = 1;
 
@@ -682,6 +684,18 @@ message AgentConsentRecord {
   // Format: "sha256:<hex>" computed over canonical JSON of:
   //   { "model": "<model_id>", "tools": ["<sorted_tool_ids>"],
   //     "config": { "<reasoning_config_key>": "<value>" } }
+  //
+  // "config" includes parameters that materially affect policy reasoning:
+  // system prompt hash, temperature, chain-of-thought mode, and whether
+  // retrieval-augmented generation (RAG) is enabled. Keys MUST be sorted
+  // lexicographically; values MUST be canonical (e.g. temperature as a
+  // string with one decimal place: "0.7").
+  //
+  // Note: this hash is self-reported by the calling agent. Callees
+  // cannot independently verify its accuracy. A dishonest agent could
+  // fabricate a stable hash across capability changes to avoid
+  // re-consent. Mitigations include governance-agent spot-checks and
+  // callee-side capability probing (see §6.1 of the preprint).
   string caller_capability_hash = 14;
 
   // Re-consent trigger. Indicates why this record was created. OPTIONAL.
@@ -725,6 +739,10 @@ message AgentConsentRecord {
   //
   // The effective sensitivity for a (category, dimension) pair is:
   //   max(principal_preference, callee_obligation, caller_obligation)
+  //
+  // where the total order is LOW < MEDIUM < HIGH. Missing entries
+  // default to LOW. This ensures that the strictest constraint from
+  // any source (principal, callee regulation, caller regulation) governs.
   //
   // Example: a hospital (HIPAA covered entity) calling an analytics
   // agent. The hospital's regulatory context declares HIPAA with
@@ -892,7 +910,7 @@ enum ConsentDecision {
 // (or refusing to invoke) a callee skill.
 //
 // Events form a singly-linked list via prev_event_id. Together with the
-// AgentConsentRecord chain they constitute "proof of adherence": a
+// ConsentRecord chain they constitute "proof of adherence": a
 // reasoning trail that goes beyond mere "proof of acceptance" by documenting
 // WHICH clause was evaluated, WHAT decision was reached, and WHY.
 //
@@ -906,7 +924,7 @@ message AdherenceEvent {
   // consent_record_id. Absent for the first event. OPTIONAL.
   optional string prev_event_id = 2;
 
-  // record_id of the AgentConsentRecord that authorises the calling agent
+  // record_id of the ConsentRecord that authorises the calling agent
   // to interact with the callee. REQUIRED.
   string consent_record_id = 3;
 
@@ -1022,6 +1040,8 @@ enum AnchorStrategy {
   // Records are batched and a Merkle root is anchored periodically.
   // Lower cost, slightly delayed assurance. The Merkle proof linking
   // a specific record to the root is stored alongside the anchor.
+  // Recommended batch boundaries: anchor at least once per hour or
+  // every 100 accumulated events, whichever comes first.
   ANCHOR_STRATEGY_MERKLE_BATCH = 2;
 
   // Only consent records (not adherence events) are anchored.
@@ -1042,22 +1062,22 @@ service ConsentService {
   // Callers SHOULD invoke this before any skill call to check for version bumps.
   rpc GetPolicy(GetPolicyRequest) returns (GetPolicyResponse);
 
-  // RecordConsent creates a new AgentConsentRecord for the caller-callee pair,
+  // RecordConsent creates a new ConsentRecord for the caller-callee pair,
   // appending it to the consent chain. Returns the created record.
   // MUST be called after the caller has parsed the PolicyDocument and
   // before any skill is invoked (when acceptance_required is true).
   rpc RecordConsent(RecordConsentRequest) returns (RecordConsentResponse);
 
-  // GetConsentRecord retrieves a specific AgentConsentRecord by record_id.
-  rpc GetConsentRecord(GetConsentRecordRequest) returns (AgentConsentRecord);
+  // GetConsentRecord retrieves a specific ConsentRecord by record_id.
+  rpc GetConsentRecord(GetConsentRecordRequest) returns (ConsentRecord);
 
-  // ListConsentHistory returns the full linked chain of AgentConsentRecords
+  // ListConsentHistory returns the full linked chain of ConsentRecords
   // for a given caller-callee pair, ordered newest-first.
   rpc ListConsentHistory(ListConsentHistoryRequest)
       returns (ListConsentHistoryResponse);
 
   // RecordAdherence appends an AdherenceEvent to the event chain for a
-  // given AgentConsentRecord. Callers SHOULD call this for every skill
+  // given ConsentRecord. Callers SHOULD call this for every skill
   // invocation (permit or deny) to build the proof-of-adherence trail.
   rpc RecordAdherence(RecordAdherenceRequest) returns (AdherenceEvent);
 
@@ -1095,12 +1115,12 @@ message GetPolicyResponse {
 // ─── RecordConsent ────────────────────────────────────────────────────────────
 
 message RecordConsentRequest {
-  AgentConsentRecord record = 1;
+  ConsentRecord record = 1;
 }
 
 message RecordConsentResponse {
   // The persisted record, potentially with server-assigned fields filled in.
-  AgentConsentRecord record = 1;
+  ConsentRecord record = 1;
 
   // True if this record supersedes a prior record (i.e. policy version bumped).
   bool supersedes_prior = 2;
@@ -1129,7 +1149,7 @@ message ListConsentHistoryRequest {
 }
 
 message ListConsentHistoryResponse {
-  repeated AgentConsentRecord records = 1;
+  repeated ConsentRecord records = 1;
 
   // Token for the next page. Absent when no more records exist.
   optional string next_page_token = 2;
@@ -1144,7 +1164,7 @@ message RecordAdherenceRequest {
 // ─── ListAdherenceEvents ──────────────────────────────────────────────────────
 
 message ListAdherenceEventsRequest {
-  // record_id of the AgentConsentRecord whose events to list. REQUIRED.
+  // record_id of the ConsentRecord whose events to list. REQUIRED.
   string consent_record_id = 1;
 
   optional int32 page_size = 2;
@@ -1159,7 +1179,7 @@ message ListAdherenceEventsResponse {
 // ─── CheckAdherence ───────────────────────────────────────────────────────────
 
 message CheckAdherenceRequest {
-  // record_id of the active AgentConsentRecord for this caller-callee pair.
+  // record_id of the active ConsentRecord for this caller-callee pair.
   string consent_record_id = 1;
 
   // The action to evaluate (skill id or ODRL action term). REQUIRED.

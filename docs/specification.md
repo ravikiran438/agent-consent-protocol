@@ -26,7 +26,7 @@
     - [4.1 PolicyDocument](#41-policydocument)
     - [4.2 PolicyClaim](#42-policyclaim)
     - [4.3 UsagePolicyRef](#43-usagepolicyref)
-    - [4.4 AgentConsentRecord](#44-agentconsentrecord)
+    - [4.4 ConsentRecord](#44-consentrecord)
     - [4.5 ParsedClaim](#45-parsedclaim)
     - [4.6 AdherenceEvent](#46-adherenceevent)
   - [5. Protocol Operations](#5-protocol-operations)
@@ -123,7 +123,7 @@ append-only. Neither party may delete or modify a committed record. Storage
 backends SHOULD enforce this via write-once semantics.
 
 **Minimal footprint.** ACAP adds exactly three objects to the A2A surface:
-`PolicyDocument`, `AgentConsentRecord`, and `AdherenceEvent`. Everything
+`PolicyDocument`, `ConsentRecord`, and `AdherenceEvent`. Everything
 else is derived.
 
 ### 1.3 Relationship to A2A and AP2
@@ -131,7 +131,7 @@ else is derived.
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │                        ACAP Layer                           │
-│   PolicyDocument · AgentConsentRecord · AdherenceEvent      │
+│   PolicyDocument · ConsentRecord · AdherenceEvent      │
 │   (What agents may do and the proof that they did it right) │
 ├─────────────────────────────────────────────────────────────┤
 │                        AP2 Layer                            │
@@ -146,7 +146,7 @@ else is derived.
 
 ACAP is a peer extension to AP2: both build on A2A via the
 `capabilities.extensions` mechanism, and both can be active simultaneously.
-When AP2 is also in use, the `AgentConsentRecord.principal_id` SHOULD match
+When AP2 is also in use, the `ConsentRecord.principal_id` SHOULD match
 the user identity established in the AP2 mandate chain.
 
 ### 1.4 Specification Structure
@@ -175,12 +175,12 @@ vocabulary.
 obligation) derived from one or more natural-language clauses in the
 callee's Terms of Service or Privacy Policy.
 
-**AgentConsentRecord.** An append-only document recording the calling
+**ConsentRecord.** An append-only document recording the calling
 agent's parsed understanding of and decision about a specific
 `PolicyDocument` version. Records form a singly-linked list constituting
 the consent chain.
 
-**Consent Chain.** The singly-linked sequence of `AgentConsentRecord`
+**Consent Chain.** The singly-linked sequence of `ConsentRecord`
 objects for a given caller-callee pair, ordered from newest to oldest via
 `prev_record_id`.
 
@@ -189,7 +189,7 @@ runtime policy evaluation for a single action. Events form a singly-linked
 list constituting the adherence trail.
 
 **Adherence Trail.** The singly-linked sequence of `AdherenceEvent` objects
-for a given `AgentConsentRecord`, ordered from newest to oldest via
+for a given `ConsentRecord`, ordered from newest to oldest via
 `prev_event_id`.
 
 **Proof of Acceptance.** The traditional human consent model: a timestamp
@@ -200,10 +200,10 @@ understanding or subsequent compliance.
 every action attempt, proving the agent evaluated policy before acting.
 
 **Principal.** The human entity on whose behalf a calling agent acts.
-Identified by `AgentConsentRecord.principal_id`.
+Identified by `ConsentRecord.principal_id`.
 
 **Version Bump.** Publication of a new `PolicyDocument` with a higher
-semantic version, which invalidates all current `AgentConsentRecord`
+semantic version, which invalidates all current `ConsentRecord`
 objects for that callee.
 
 ---
@@ -242,7 +242,7 @@ two layers are complementary, not substitutable.
 ACAP generates proof of adherence by requiring calling agents to:
 
 1. Parse every `PolicyClaim` in the `PolicyDocument` and record their
-   understanding in `AgentConsentRecord.parsed_claims`.
+   understanding in `ConsentRecord.parsed_claims`.
 2. Evaluate the relevant `PolicyClaim` before every skill invocation and
    record their reasoning in `AdherenceEvent.reasoning`.
 
@@ -329,7 +329,7 @@ Published by the callee agent at a well-known HTTPS URL. Hosted at
 |--------------------|----------|-------|
 | `version`          | REQUIRED | Semver |
 | `document_uri`     | REQUIRED | HTTPS |
-| `document_hash`    | REQUIRED | `sha256:<hex>` |
+| `document_hash`    | REQUIRED | `sha256:<hex>` (computed with this field set to `""`) |
 | `effective_date`   | REQUIRED | ISO 8601 UTC |
 | `supersedes`       | OPTIONAL | Absent on initial version |
 | `change_summary`   | OPTIONAL | |
@@ -369,7 +369,7 @@ Embedded in the A2A AgentCard as the top-level `usage_policy` field.
 }
 ```
 
-### 4.4 AgentConsentRecord
+### 4.4 ConsentRecord
 
 ```json
 {
@@ -415,10 +415,47 @@ Embedded in the A2A AgentCard as the top-level `usage_policy` field.
   record referenced by `prev_record_id`.
 - Once committed, no field MAY be modified.
 
+**Capability fingerprint (`caller_capability_hash`):**
+
+The `caller_capability_hash` is a SHA-256 digest computed over the canonical
+JSON of the calling agent's capability fingerprint:
+
+```json
+{
+  "model": "<model_id>",
+  "tools": ["<sorted_tool_ids>"],
+  "config": {
+    "chain_of_thought": "enabled",
+    "rag_enabled": "true",
+    "system_prompt_hash": "sha256:<hex>",
+    "temperature": "0.7"
+  }
+}
+```
+
+Keys are sorted lexicographically at every nesting level. The `config` object
+includes parameters that materially affect policy reasoning: system prompt
+hash, temperature, chain-of-thought mode, and RAG enablement.
+
+> **Limitation:** `caller_capability_hash` is self-reported. Callees cannot
+> independently verify its accuracy. See [§12](#12-security-considerations).
+
+**Effective sensitivity formula:**
+
+When both caller and callee declare regulatory contexts, the governance agent
+computes the effective sensitivity for each (category, dimension) pair as:
+
+```
+effective = max(principal_preference, callee_obligation, caller_obligation)
+```
+
+where the total order is `LOW < MEDIUM < HIGH`. Missing entries default to
+`LOW`. This ensures the strictest constraint from any source governs.
+
 ### 4.5 ParsedClaim
 
 Every `PolicyClaim` in the `PolicyDocument` MUST have a corresponding
-`ParsedClaim` in `AgentConsentRecord.parsed_claims`. This requirement
+`ParsedClaim` in `ConsentRecord.parsed_claims`. This requirement
 ensures agents cannot silently ignore inconvenient clauses.
 
 | Field            | Required | Notes |
@@ -478,19 +515,19 @@ parsing claims.
 
 ### 5.2 RecordConsent
 
-Creates a new `AgentConsentRecord` for the caller-callee pair. MUST be
+Creates a new `ConsentRecord` for the caller-callee pair. MUST be
 called after the caller has parsed the `PolicyDocument` and before any
 skill invocation when `acceptance_required` is `true`.
 
 **Request:**
 ```json
-{ "record": { /* AgentConsentRecord */ } }
+{ "record": { /* ConsentRecord */ } }
 ```
 
 **Response:**
 ```json
 {
-  "record": { /* persisted AgentConsentRecord */ },
+  "record": { /* persisted ConsentRecord */ },
   "supersedes_prior": true
 }
 ```
@@ -509,7 +546,7 @@ The server MUST:
 
 ### 5.3 GetConsentRecord
 
-Retrieves a specific `AgentConsentRecord` by `record_id`.
+Retrieves a specific `ConsentRecord` by `record_id`.
 
 ### 5.4 ListConsentHistory
 
@@ -519,7 +556,7 @@ Supports pagination via `page_token`.
 ### 5.5 RecordAdherence
 
 Appends an `AdherenceEvent` to the event chain for a given
-`AgentConsentRecord`. Callers SHOULD call this for every skill invocation
+`ConsentRecord`. Callers SHOULD call this for every skill invocation
 attempt (permit or deny).
 
 The server MUST verify that `consent_record_id` references a record in
@@ -604,7 +641,7 @@ Calling Agent                             Callee Agent
      │           conditional]                  │
      │                                         │
      │── POST /acap/consent ──────────────────►│
-     │   AgentConsentRecord                    │
+     │   ConsentRecord                    │
      │◄─ RecordConsentResponse ────────────────│
      │   { record_id: "019500a0-...",          │
      │     supersedes_prior: false }           │
@@ -620,20 +657,20 @@ Calling Agent                             Callee Agent
 ### 7.2 Version Bump Re-Acceptance
 
 When the callee publishes a new `PolicyDocument` version, all existing
-`AgentConsentRecord` objects for that callee are invalidated (those with
+`ConsentRecord` objects for that callee are invalidated (those with
 `valid_until: "on_version_bump"`).
 
 Calling agents MUST detect version bumps by comparing the
 `UsagePolicyRef.version` in the AgentCard (fetched fresh from
 `/.well-known/agent.json`) against the `policy_version` in their current
-`AgentConsentRecord`. If they differ:
+`ConsentRecord`. If they differ:
 
 1. Fetch the new `PolicyDocument` from `document_uri`.
 2. Compute the diff against the previous version using `supersedes` and
    `change_summary`.
 3. Surface material changes to the principal if `principal_id` is set.
 4. Re-parse all `PolicyClaim` objects.
-5. Post a new `AgentConsentRecord` with `prev_record_id` pointing to the
+5. Post a new `ConsentRecord` with `prev_record_id` pointing to the
    just-invalidated record.
 
 The new record is appended to the consent chain. The prior record is not
@@ -694,7 +731,7 @@ A **non-material change** is one that:
 
 ### 8.3 Version Bump Invalidation
 
-All `AgentConsentRecord` objects with `valid_until: "on_version_bump"` for
+All `ConsentRecord` objects with `valid_until: "on_version_bump"` for
 a given callee are logically invalidated the moment the callee's
 `UsagePolicyRef.version` changes. They are not deleted. The calling agent
 MUST NOT invoke skills under an invalidated consent record.
@@ -733,7 +770,7 @@ A verifier MAY validate chain integrity by:
 
 ### 9.3 Storage Requirements
 
-Callee agents MUST store all `AgentConsentRecord` and `AdherenceEvent`
+Callee agents MUST store all `ConsentRecord` and `AdherenceEvent`
 objects they receive. They MUST NOT delete or mutate committed records.
 
 Calling agents SHOULD maintain their own local copy of all records they
@@ -748,7 +785,7 @@ records submitted to it SHOULD also be retained by both parties locally.
 
 ## 10. Cryptographic Signatures
 
-`AgentConsentRecord.caller_signature` and `AdherenceEvent.agent_signature`
+`ConsentRecord.caller_signature` and `AdherenceEvent.agent_signature`
 MUST be JWS compact serialisations (RFC 7515) produced over the canonical
 JSON of the respective object.
 
@@ -804,7 +841,7 @@ to verify enables a network-path attacker to substitute a more permissive
 policy.
 
 **Consent record forgery.** Callee servers MUST verify `caller_signature`
-on all submitted `AgentConsentRecord` objects where a signature is present.
+on all submitted `ConsentRecord` objects where a signature is present.
 Absence of a signature does not invalidate the record but reduces its
 non-repudiation value.
 
@@ -817,7 +854,7 @@ without comparing its hash to the current `UsagePolicyRef.document_hash`
 on a fresh AgentCard fetch. Stale policy caching is a primary attack
 surface.
 
-**Principal impersonation.** `AgentConsentRecord.principal_id` is
+**Principal impersonation.** `ConsentRecord.principal_id` is
 informational. Callee servers MUST NOT grant elevated permissions based on
 the claimed `principal_id` alone without independent verification via the
 A2A authentication layer.

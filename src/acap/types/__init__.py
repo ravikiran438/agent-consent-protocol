@@ -26,7 +26,7 @@ from acap.types.adherence_event import (
     CheckAdherenceResponse,
 )
 from acap.types.consent_record import (
-    AgentConsentRecord,
+    ConsentRecord,
     ConsentDecision,
     ParsedClaim,
 )
@@ -44,7 +44,7 @@ __all__ = [
     "RuleType",
     "UsagePolicyRef",
     # Consent record
-    "AgentConsentRecord",
+    "ConsentRecord",
     "ParsedClaim",
     "ConsentDecision",
     # Adherence event
