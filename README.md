@@ -1,7 +1,7 @@
 # Agent Consent and Adherence Protocol (ACAP)
 
 **Status:** Draft v0.1.0
-**Paper:** [Anumati: Proof of Adherence as a Formal Consent Model for Autonomous Agent Protocols](https://arxiv.org/abs/2603.XXXXX) *(arXiv ID to be filled when live)*
+**Paper:** [Anumati: Proof of Adherence as a Formal Consent Model for Autonomous Agent Protocols](https://doi.org/10.5281/zenodo.18950892)
 **Extension URI:** `https://github.com/ravikiran438/agent-consent-protocol/v1`
 **License:** Apache 2.0
 
