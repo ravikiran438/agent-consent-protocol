@@ -15,7 +15,7 @@
 """Runtime validators for ACAP consent chains and adherence trails.
 
 These are reference implementations of the integrity checks described
-in the Anumati paper §3.2–§3.4. They are intentionally small — the
+in the Anumati paper §3.2–§3.4. They are intentionally small, the
 goal is a correct, readable artifact that other implementers can port,
 not a fully-featured library.
 """

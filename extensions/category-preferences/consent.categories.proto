@@ -1,0 +1,104 @@
+// Copyright 2026 Ravi Kiran Kadaboina
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+// ACAP extension: category-preferences
+// This proto is part of a proposed extension and is not yet normative.
+// See ../extensions/category-preferences/README.md for motivation.
+
+syntax = "proto3";
+
+package a2a.consent.v1;
+
+import "consent.proto";
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Category Preferences (principal-defined sensitivity)
+// ─────────────────────────────────────────────────────────────────────────────
+
+// CategorySensitivity expresses the human principal's sensitivity level for
+// a given data category. The governance agent uses these preferences when
+// evaluating materiality: a claim in a HIGH sensitivity category is always
+// escalated to the human; a claim in a LOW category may be auto-approved.
+//
+// Example: a user interacting with a cosmetic surgery app might set:
+//   BIOMETRIC = HIGH (photos must be anonymised)
+//   HEALTH = HIGH (procedures are private)
+//   IDENTITY = LOW (name is fine)
+//
+// The same user at a pharmacy might set:
+//   HEALTH = LOW (prescriptions are expected)
+//   IDENTITY = LOW (name and address are expected)
+//   FINANCIAL = MEDIUM (track but don't block payment info)
+enum CategorySensitivity {
+  CATEGORY_SENSITIVITY_UNSPECIFIED = 0;
+
+  // Principal does not consider this category sensitive in this context.
+  // Governance agent may auto-approve claims in this category.
+  CATEGORY_SENSITIVITY_LOW = 1;
+
+  // Principal wants to be informed of changes but does not require
+  // explicit approval. Governance agent records but does not block.
+  CATEGORY_SENSITIVITY_MEDIUM = 2;
+
+  // Principal considers this category highly sensitive. Any claim
+  // affecting this category MUST escalate to HUMAN_REQUIRED regardless
+  // of the governance agent's materiality assessment.
+  CATEGORY_SENSITIVITY_HIGH = 3;
+}
+
+// CategoryPreference is a single entry mapping a (data category, usage
+// dimension) pair to the principal's sensitivity level. The two axes
+// form a matrix:
+//
+//   Example, cosmetic surgery app:
+//   ┌─────────────┬─────────┬────────┬───────────────┬──────────┐
+//   │             │ Storage │ Access │ 3rd-Party     │ Training │
+//   ├─────────────┼─────────┼────────┼───────────────┼──────────┤
+//   │ Biometric   │ HIGH    │ MEDIUM │ HIGH          │ HIGH     │
+//   │ Health      │ MEDIUM  │ LOW    │ HIGH          │ HIGH     │
+//   │ Identity    │ LOW     │ LOW    │ LOW           │ LOW      │
+//   │ Financial   │ LOW     │ LOW    │ MEDIUM        │ HIGH     │
+//   └─────────────┴─────────┴────────┴───────────────┴──────────┘
+//
+// When dimension is UNSPECIFIED, the preference applies as a default
+// for ALL dimensions of that category (can be overridden by a more
+// specific entry). When both category and dimension are UNSPECIFIED,
+// the entry is ignored.
+message CategoryPreference {
+  // The data category. REQUIRED.
+  DataCategory category = 1;
+
+  // The principal's sensitivity for this (category, dimension) pair.
+  // REQUIRED.
+  CategorySensitivity sensitivity = 2;
+
+  // Optional natural-language note from the principal explaining their
+  // preference (e.g., "I have dependants, do not share any minor data").
+  // OPTIONAL.
+  optional string note = 3;
+
+  // The usage dimension this preference applies to. OPTIONAL.
+  // When absent or UNSPECIFIED, the sensitivity applies as the default
+  // for ALL dimensions of this category. A specific dimension entry
+  // overrides the default.
+  //
+  // Example: category=BIOMETRIC, dimension=UNSPECIFIED, sensitivity=HIGH
+  //          means "treat all biometric operations as high sensitivity."
+  //          A separate entry with category=BIOMETRIC,
+  //          dimension=ACCESS, sensitivity=LOW would override only the
+  //          access dimension (e.g. the surgeon needs to view the photo
+  //          during consultation).
+  UsageDimension dimension = 4;
+}
+

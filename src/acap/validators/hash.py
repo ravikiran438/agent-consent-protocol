@@ -17,7 +17,7 @@
 Implements the hashing convention from Anumati §3.1: the `hash` field
 in PolicyDocument is the SHA-256 of the canonical JSON serialisation
 of the document itself, with the `hash` field set to the empty string
-before hashing. This breaks the circularity problem — the digest input
+before hashing. This breaks the circularity problem, the digest input
 never contains the digest.
 
 Canonicalisation follows RFC 8785 (JSON Canonicalization Scheme):
@@ -91,7 +91,7 @@ def verify_policy_hash(doc: PolicyDocument, expected: str) -> bool:
 
     expected_norm = expected
     if not expected_norm.startswith(HASH_PREFIX):
-        # tolerate bare hex — but the canonical form always has the prefix
+        # tolerate bare hex, but the canonical form always has the prefix
         expected_norm = f"{HASH_PREFIX}{expected_norm}"
 
     return compute_policy_hash(doc) == expected_norm

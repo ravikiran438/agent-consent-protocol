@@ -1,24 +1,38 @@
 --------------------------- MODULE ConsentLifecycle ---------------------------
 (*
- * TLA+ Specification — ACAP Consent Lifecycle
+ * TLA+ Specification: ACAP Consent Lifecycle
+ *
+ * Scope:
+ *   This module models the consent lifecycle for Anumati Core AND the
+ *   governance-tiering extension together, because the tiered escalation
+ *   introduces state-machine behaviour (GovernanceReview state, tier
+ *   decisions) that is easier to verify in one combined model than split
+ *   across two files.
+ *
+ *   Core-only properties: S1, S2, S3, S4, S5, S6, S7, L1, L2.
+ *   Extension properties (governance-tiering): S8, S9.
+ *
+ *   When the governance-tiering extension graduates to its own normative
+ *   specification, S8 and S9 will move to a separate TLA+ module and the
+ *   core lifecycle here will collapse the GovernanceReview state.
  *
  * Models the state machine governing consent between a single
  * caller–callee agent pair under the Agent Consent and Adherence
  * Protocol (ACAP), including tiered escalation via a governance agent.
  *
  * States:
- *   Idle              — no relationship established
- *   PolicyFetched     — caller has retrieved the PolicyDocument
- *   GovernanceReview  — governance agent is evaluating materiality
- *   Accepted          — consent recorded (decision = accepted)
- *   Rejected          — consent recorded (decision = rejected)
- *   Conditional       — consent recorded (decision = conditional)
- *   Stale             — consent invalidated (policy bump or cap change)
+ *   Idle             , no relationship established
+ *   PolicyFetched    , caller has retrieved the PolicyDocument
+ *   GovernanceReview , governance agent is evaluating materiality
+ *   Accepted         , consent recorded (decision = accepted)
+ *   Rejected         , consent recorded (decision = rejected)
+ *   Conditional      , consent recorded (decision = conditional)
+ *   Stale            , consent invalidated (policy bump or cap change)
  *
  * Escalation tiers (on re-consent):
- *   auto_approved       — immaterial change, governance agent auto-approves
- *   governance_reviewed — material but within delegated authority
- *   human_required      — material + high stakes, blocks until human acts
+ *   auto_approved      , immaterial change, governance agent auto-approves
+ *   governance_reviewed, material but within delegated authority
+ *   human_required     , material + high stakes, blocks until human acts
  *
  * Safety properties:
  *   S1  NoSkillWithoutConsent
@@ -28,8 +42,8 @@
  *   S5  ConditionalGating
  *   S6  NoDisputedPermit
  *   S7  NoSkillOnCapabilityDrift
- *   S8  GovernanceAlwaysReviews — no re-consent bypasses governance
- *   S9  HumanRequiredHonoured  — human_required tier blocks until human acts
+ *   S8  GovernanceAlwaysReviews, no re-consent bypasses governance
+ *   S9  HumanRequiredHonoured , human_required tier blocks until human acts
  *
  * Liveness properties:
  *   L1  EventualReConsent
@@ -110,7 +124,7 @@ FetchPolicy ==
                    capabilityVersion, consentCapVersion,
                    escalationTier, humanApproved>>
 
-(* First consent (no prior record) — goes directly to consent decision.
+(* First consent (no prior record), goes directly to consent decision.
    No governance review needed because there is nothing to diff. *)
 InitialAccept ==
     /\ state = "PolicyFetched"
@@ -125,7 +139,7 @@ InitialAccept ==
                    skillCallCount, disputedSkillAttempts,
                    capabilityVersion, humanApproved>>
 
-(* First consent — rejected. *)
+(* First consent, rejected. *)
 InitialReject ==
     /\ state = "PolicyFetched"
     /\ Len(consentChain) = 0
@@ -139,7 +153,7 @@ InitialReject ==
                    skillCallCount, disputedSkillAttempts,
                    capabilityVersion, humanApproved>>
 
-(* First consent — conditional. *)
+(* First consent, conditional. *)
 InitialConditional ==
     /\ state = "PolicyFetched"
     /\ Len(consentChain) = 0
@@ -153,7 +167,7 @@ InitialConditional ==
                    skillCallCount, disputedSkillAttempts,
                    capabilityVersion, humanApproved>>
 
-(* Re-consent (prior record exists) — MUST go through governance review.
+(* Re-consent (prior record exists), MUST go through governance review.
    The calling agent has computed a PolicyDiff; the governance agent now
    evaluates materiality. *)
 EnterGovernanceReview ==
@@ -166,7 +180,7 @@ EnterGovernanceReview ==
                    publishedVersion, skillCallCount, disputedSkillAttempts,
                    capabilityVersion, consentCapVersion, escalationTier>>
 
-(* Governance agent determines change is immaterial — auto-approves. *)
+(* Governance agent determines change is immaterial, auto-approves. *)
 GovernanceAutoApprove ==
     /\ state = "GovernanceReview"
     /\ escalationTier = "none"  \* no decision made yet in this review
@@ -177,7 +191,7 @@ GovernanceAutoApprove ==
                    capabilityVersion, consentCapVersion, humanApproved>>
 
 (* Governance agent determines change is material but within its delegated
-   authority — approves without human. *)
+   authority, approves without human. *)
 GovernanceApprove ==
     /\ state = "GovernanceReview"
     /\ escalationTier = "none"  \* no decision made yet in this review
@@ -187,7 +201,7 @@ GovernanceApprove ==
                    publishedVersion, skillCallCount, disputedSkillAttempts,
                    capabilityVersion, consentCapVersion, humanApproved>>
 
-(* Governance agent determines change requires human review — blocks. *)
+(* Governance agent determines change requires human review, blocks. *)
 GovernanceEscalateToHuman ==
     /\ state = "GovernanceReview"
     /\ escalationTier = "none"  \* no decision made yet in this review
@@ -206,7 +220,7 @@ HumanApprove ==
                    publishedVersion, skillCallCount, disputedSkillAttempts,
                    capabilityVersion, consentCapVersion, escalationTier>>
 
-(* Re-consent accepted — after governance review. *)
+(* Re-consent accepted, after governance review. *)
 ReconsentAccept ==
     /\ state = "PolicyFetched"
     /\ Len(consentChain) > 0
@@ -222,7 +236,7 @@ ReconsentAccept ==
                    skillCallCount, disputedSkillAttempts,
                    capabilityVersion, humanApproved>>
 
-(* Re-consent rejected — after governance review. *)
+(* Re-consent rejected, after governance review. *)
 ReconsentReject ==
     /\ state = "PolicyFetched"
     /\ Len(consentChain) > 0
@@ -238,7 +252,7 @@ ReconsentReject ==
                    skillCallCount, disputedSkillAttempts,
                    capabilityVersion, humanApproved>>
 
-(* Re-consent conditional — after governance review. *)
+(* Re-consent conditional, after governance review. *)
 ReconsentConditional ==
     /\ state = "PolicyFetched"
     /\ Len(consentChain) > 0
@@ -268,7 +282,7 @@ RecordAdherence(decision) ==
                    capabilityVersion, consentCapVersion,
                    escalationTier, humanApproved>>
 
-(* Caller evaluates a DISPUTED claim — deny or escalate only. *)
+(* Caller evaluates a DISPUTED claim, deny or escalate only. *)
 RecordDisputedAdherence(decision) ==
     /\ state = "Conditional"
     /\ capabilityVersion = consentCapVersion
@@ -283,7 +297,7 @@ RecordDisputedAdherence(decision) ==
                    capabilityVersion, consentCapVersion,
                    escalationTier, humanApproved>>
 
-(* Caller invokes a skill — undisputed permit required. *)
+(* Caller invokes a skill, undisputed permit required. *)
 InvokeSkill ==
     /\ state \in {"Accepted", "Conditional"}
     /\ capabilityVersion = consentCapVersion
@@ -297,7 +311,7 @@ InvokeSkill ==
                    capabilityVersion, consentCapVersion,
                    escalationTier, humanApproved>>
 
-(* Attempted skill on disputed claim — blocked. *)
+(* Attempted skill on disputed claim, blocked. *)
 AttemptDisputedSkill ==
     /\ state = "Conditional"
     /\ Len(adherenceTrail) > 0
@@ -378,7 +392,7 @@ Spec == Init /\ [][Next]_vars
 
 (* S1: No skill call without prior active consent.
    skillCallCount is cumulative across epochs, so we check that consent
-   was established at some point — not that the *latest* record is still
+   was established at some point, not that the *latest* record is still
    accepting. The structural guard on InvokeSkill (state ∈ {Accepted,
    Conditional}) prevents calls in non-active states. *)
 NoSkillWithoutConsent ==
@@ -388,7 +402,7 @@ NoSkillWithoutConsent ==
                (consentChain[i]).decision \in
                    {"accepted", "conditional"}
 
-(* S2: Consent chain is append-only — its length never decreases.
+(* S2: Consent chain is append-only, its length never decreases.
    Expressed as a temporal action property; checked under PROPERTIES
    in TLC, not INVARIANTS. *)
 ChainMonotonicity ==
@@ -427,7 +441,7 @@ NoSkillOnCapabilityDrift ==
     skillCallCount > 0 => consentCapVersion > 0
 
 (* S8: Every re-consent record (index > 1) has a governance tier set.
-   The governance agent ALWAYS reviews on re-consent — no bypass. *)
+   The governance agent ALWAYS reviews on re-consent, no bypass. *)
 GovernanceAlwaysReviews ==
     \A i \in 2..Len(consentChain):
         (consentChain[i]).tier # "none"

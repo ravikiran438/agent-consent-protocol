@@ -72,7 +72,7 @@ attachment and append-only consent auditing between AI agents.
 As AI agents increasingly call other agents autonomously, the question of
 what an agent is **permitted** to do diverges from the question of what an
 agent is **capable** of doing. The A2A Agent Card communicates capability.
-ACAP communicates policy—and provides the audit infrastructure to prove that
+ACAP communicates policy and provides the audit infrastructure to prove that
 policy was understood and honoured at runtime.
 
 ### 1.1 Goals
@@ -256,7 +256,7 @@ for the results obtained by the use of that tool."
 This has two consequences for A2A systems:
 
 1. When Agent A calls Agent B and implicitly accepts Agent B's usage policy, Agent
-   A's principal is legally bound—without necessarily being aware.
+   A's principal is legally bound, without necessarily being aware.
 2. When Agent A calls Agent B and the interaction causes harm, the
    principal cannot claim ignorance of the terms if the agent processed them.
 
@@ -440,18 +440,6 @@ hash, temperature, chain-of-thought mode, and RAG enablement.
 > **Limitation:** `caller_capability_hash` is self-reported. Callees cannot
 > independently verify its accuracy. See [§12](#12-security-considerations).
 
-**Effective sensitivity formula:**
-
-When both caller and callee declare regulatory contexts, the governance agent
-computes the effective sensitivity for each (category, dimension) pair as:
-
-```
-effective = max(principal_preference, callee_obligation, caller_obligation)
-```
-
-where the total order is `LOW < MEDIUM < HIGH`. Missing entries default to
-`LOW`. This ensures the strictest constraint from any source governs.
-
 ### 4.5 ParsedClaim
 
 Every `PolicyClaim` in the `PolicyDocument` MUST have a corresponding
@@ -589,7 +577,7 @@ Callee agents declare ACAP support by adding the ACAP extension URI to
     "extensions": [
       {
         "uri": "https://github.com/ravikiran438/agent-consent-protocol/v1",
-        "description": "Supports the Agent Consent Protocol.",
+        "description": "Supports the Agent Consent and Adherence Protocol.",
         "required": true
       }
     ]
@@ -662,7 +650,7 @@ When the callee publishes a new `PolicyDocument` version, all existing
 
 Calling agents MUST detect version bumps by comparing the
 `UsagePolicyRef.version` in the AgentCard (fetched fresh from
-`/.well-known/agent.json`) against the `policy_version` in their current
+`/.well-known/agent-card.json`) against the `policy_version` in their current
 `ConsentRecord`. If they differ:
 
 1. Fetch the new `PolicyDocument` from `document_uri`.
@@ -674,7 +662,7 @@ Calling agents MUST detect version bumps by comparing the
    just-invalidated record.
 
 The new record is appended to the consent chain. The prior record is not
-deleted—it remains permanently in the chain as evidence of what the agent
+deleted; it remains permanently in the chain as evidence of what the agent
 previously agreed to.
 
 ### 7.3 Skill Invocation with Adherence Recording

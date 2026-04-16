@@ -21,7 +21,7 @@ AdherenceEvent records anchored to a ConsentRecord. This module checks:
   S4  Skill invocations are preceded by a permit on an undisputed claim.
       (Enforced here by checking no permit event exists for a disputed
       claim, which is the contrapositive we can verify from the trail
-      alone — see S6.)
+      alone, see S6.)
   S5  A disputed claim produces deny or escalate, never permit.
   S6  No AdherenceEvent for a disputed claim has decision = permit.
       (Logical dual of S5; both are checked.)
@@ -58,7 +58,7 @@ def validate_adherence_trail(
     Raises TrailValidationError on the first failure.
     """
     if not trail:
-        return  # empty trail is structurally fine — nothing to check
+        return  # empty trail is structurally fine, nothing to check
 
     first = trail[0]
     if first.prev_event_id is not None:
@@ -72,7 +72,7 @@ def validate_adherence_trail(
     disputed_cache: dict[str, set[str]] = {}
 
     for i, evt in enumerate(trail):
-        # S3 — event anchors to a known ConsentRecord
+        # S3, event anchors to a known ConsentRecord
         consent = consent_records.get(evt.consent_record_id)
         if consent is None:
             raise TrailValidationError(
@@ -90,7 +90,7 @@ def validate_adherence_trail(
                     f"{prev.event_id!r}"
                 )
 
-        # S5/S6 — disputed claims can never carry a permit
+        # S5/S6, disputed claims can never carry a permit
         if evt.consent_record_id not in disputed_cache:
             disputed_cache[evt.consent_record_id] = _disputed_claim_ids(consent)
 

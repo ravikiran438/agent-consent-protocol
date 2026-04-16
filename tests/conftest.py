@@ -63,7 +63,7 @@ def policy_v1_hashed(policy_v1: PolicyDocument) -> PolicyDocument:
     """Same as policy_v1 but with document_hash set to the true hash.
 
     Most tests want the policy's hash field to actually be correct;
-    a few (tamper tests) want the unhashed version — use policy_v1 for those.
+    a few (tamper tests) want the unhashed version, use policy_v1 for those.
     """
     policy_v1.document_hash = compute_policy_hash(policy_v1)
     return policy_v1

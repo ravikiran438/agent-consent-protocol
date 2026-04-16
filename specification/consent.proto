@@ -88,10 +88,10 @@ message PolicyDocument {
   // Serves as the legal ground truth; this proto is an operational proxy.
   string natural_language_uri = 9;
 
-  // Regulatory frameworks under which this policy is governed. OPTIONAL.
-  // Replaces a simple jurisdiction string list with structured context
-  // that agents can reason about. See RegulatoryContext.
-  repeated RegulatoryContext regulatory_contexts = 10;
+  // Jurisdictions under which this policy is governed (e.g. ["GDPR", "CCPA"]).
+  // A simple string list is sufficient at the core level; richer structured
+  // regulatory context is available as a protocol extension. OPTIONAL.
+  repeated string jurisdictions = 10;
 }
 
 // PolicyClaim is a single machine-readable rule derived from one or more
@@ -152,21 +152,18 @@ message PolicyClaim {
   // A single data category (e.g. BIOMETRIC) may appear in multiple claims
   // with different dimensions: one governing storage, another governing
   // third-party sharing, another governing automated decision-making.
-  // The principal's sensitivity often varies by dimension — they may
+  // The principal's sensitivity often varies by dimension, they may
   // accept storage of their photo but refuse sharing it with a third party.
   UsageDimension dimension = 10;
 }
 
-// DataCategory classifies the subject matter of a PolicyClaim. This allows
-// human principals to express asymmetric sensitivity: a user may not care
-// about name storage at a pharmacy but may demand anonymisation of photos
-// at a cosmetic surgeon. The category is assigned by the policy publisher
-// and evaluated by the governance agent against the principal's
-// CategoryPreferences during escalation.
+// DataCategory classifies the subject matter of a PolicyClaim. The category
+// is assigned by the policy publisher and allows downstream tooling, for
+// example, the category-preferences extension, to reason about claims
+// grouped by kind rather than by specific asset.
 //
-// Categories are intentionally coarse — they group claims by the *kind*
-// of data or obligation, not the specific asset. Fine-grained asset
-// classification remains in the ODRL-aligned `asset` field on PolicyClaim.
+// Categories are intentionally coarse. Fine-grained asset classification
+// remains in the ODRL-aligned `asset` field on PolicyClaim.
 enum DataCategory {
   DATA_CATEGORY_UNSPECIFIED = 0;
 
@@ -210,7 +207,7 @@ enum DataCategory {
 }
 
 // UsageDimension classifies WHAT is being done with the data. DataCategory
-// answers "what kind of data?" — UsageDimension answers "what operation?"
+// answers "what kind of data?", UsageDimension answers "what operation?"
 //
 // The two form a matrix: a principal's sensitivity is a function of BOTH.
 // Storing biometric data at a passport office = expected (LOW).
@@ -242,7 +239,7 @@ enum UsageDimension {
 
   // Training/model improvement: data is used to train, fine-tune, or
   // evaluate machine learning models. Often the most contentious
-  // dimension — principals frequently accept storage but refuse training.
+  // dimension, principals frequently accept storage but refuse training.
   USAGE_DIMENSION_TRAINING = 5;
 
   // Aggregation/analytics: data is combined with other principals' data
@@ -320,281 +317,6 @@ message UsagePolicyRef {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Category Preferences (principal-defined sensitivity)
-// ─────────────────────────────────────────────────────────────────────────────
-
-// CategorySensitivity expresses the human principal's sensitivity level for
-// a given data category. The governance agent uses these preferences when
-// evaluating materiality: a claim in a HIGH sensitivity category is always
-// escalated to the human; a claim in a LOW category may be auto-approved.
-//
-// Example: a user interacting with a cosmetic surgery app might set:
-//   BIOMETRIC = HIGH (photos must be anonymised)
-//   HEALTH = HIGH (procedures are private)
-//   IDENTITY = LOW (name is fine)
-//
-// The same user at a pharmacy might set:
-//   HEALTH = LOW (prescriptions are expected)
-//   IDENTITY = LOW (name and address are expected)
-//   FINANCIAL = MEDIUM (track but don't block payment info)
-enum CategorySensitivity {
-  CATEGORY_SENSITIVITY_UNSPECIFIED = 0;
-
-  // Principal does not consider this category sensitive in this context.
-  // Governance agent may auto-approve claims in this category.
-  CATEGORY_SENSITIVITY_LOW = 1;
-
-  // Principal wants to be informed of changes but does not require
-  // explicit approval. Governance agent records but does not block.
-  CATEGORY_SENSITIVITY_MEDIUM = 2;
-
-  // Principal considers this category highly sensitive. Any claim
-  // affecting this category MUST escalate to HUMAN_REQUIRED regardless
-  // of the governance agent's materiality assessment.
-  CATEGORY_SENSITIVITY_HIGH = 3;
-}
-
-// CategoryPreference is a single entry mapping a (data category, usage
-// dimension) pair to the principal's sensitivity level. The two axes
-// form a matrix:
-//
-//   Example — cosmetic surgery app:
-//   ┌─────────────┬─────────┬────────┬───────────────┬──────────┐
-//   │             │ Storage │ Access │ 3rd-Party     │ Training │
-//   ├─────────────┼─────────┼────────┼───────────────┼──────────┤
-//   │ Biometric   │ HIGH    │ MEDIUM │ HIGH          │ HIGH     │
-//   │ Health      │ MEDIUM  │ LOW    │ HIGH          │ HIGH     │
-//   │ Identity    │ LOW     │ LOW    │ LOW           │ LOW      │
-//   │ Financial   │ LOW     │ LOW    │ MEDIUM        │ HIGH     │
-//   └─────────────┴─────────┴────────┴───────────────┴──────────┘
-//
-// When dimension is UNSPECIFIED, the preference applies as a default
-// for ALL dimensions of that category (can be overridden by a more
-// specific entry). When both category and dimension are UNSPECIFIED,
-// the entry is ignored.
-message CategoryPreference {
-  // The data category. REQUIRED.
-  DataCategory category = 1;
-
-  // The principal's sensitivity for this (category, dimension) pair.
-  // REQUIRED.
-  CategorySensitivity sensitivity = 2;
-
-  // Optional natural-language note from the principal explaining their
-  // preference (e.g., "I have dependants — do not share any minor data").
-  // OPTIONAL.
-  optional string note = 3;
-
-  // The usage dimension this preference applies to. OPTIONAL.
-  // When absent or UNSPECIFIED, the sensitivity applies as the default
-  // for ALL dimensions of this category. A specific dimension entry
-  // overrides the default.
-  //
-  // Example: category=BIOMETRIC, dimension=UNSPECIFIED, sensitivity=HIGH
-  //          means "treat all biometric operations as high sensitivity."
-  //          A separate entry with category=BIOMETRIC,
-  //          dimension=ACCESS, sensitivity=LOW would override only the
-  //          access dimension (e.g. the surgeon needs to view the photo
-  //          during consultation).
-  UsageDimension dimension = 4;
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Regulatory Context (compliance obligation propagation)
-// ─────────────────────────────────────────────────────────────────────────────
-
-// RegulatoryFramework identifies a specific regulatory regime. Agents are
-// NOT the regulated entity — HIPAA governs the covered entity (hospital),
-// PCI-DSS governs the merchant, GDPR governs the data controller. The
-// agent acts ON BEHALF OF the regulated entity. But the agent must know
-// which regime applies so it can:
-//   (a) apply the correct data category constraints (e.g. HIPAA mandates
-//       heightened protections for PHI that go beyond generic HEALTH),
-//   (b) ensure the governance agent's materiality assessment respects
-//       framework-specific requirements, and
-//   (c) produce audit records that satisfy the framework's evidence standard.
-//
-// The relationship is delegation of compliance obligation: the principal
-// (or their organisation) is the regulated party, and the agent inherits
-// specific behavioural constraints through the regulatory context.
-enum RegulatoryFramework {
-  REGULATORY_FRAMEWORK_UNSPECIFIED = 0;
-
-  // EU General Data Protection Regulation. Governs data controllers and
-  // processors handling EU residents' personal data.
-  REGULATORY_FRAMEWORK_GDPR = 1;
-
-  // US Health Insurance Portability and Accountability Act. Governs
-  // covered entities (providers, plans, clearinghouses) and their
-  // business associates handling Protected Health Information (PHI).
-  REGULATORY_FRAMEWORK_HIPAA = 2;
-
-  // Payment Card Industry Data Security Standard. Governs merchants
-  // and service providers handling cardholder data.
-  REGULATORY_FRAMEWORK_PCI_DSS = 3;
-
-  // California Consumer Privacy Act / California Privacy Rights Act.
-  // Governs businesses collecting California residents' personal info.
-  REGULATORY_FRAMEWORK_CCPA = 4;
-
-  // EU AI Act. Governs providers and deployers of AI systems,
-  // with specific transparency and consent requirements for
-  // autonomous agent transactions.
-  REGULATORY_FRAMEWORK_EU_AI_ACT = 5;
-
-  // Children's Online Privacy Protection Act. Governs operators of
-  // websites/services directed at children under 13.
-  REGULATORY_FRAMEWORK_COPPA = 6;
-
-  // SOC 2 Type II. Not a regulation but a widely adopted audit
-  // framework for service organisations.
-  REGULATORY_FRAMEWORK_SOC2 = 7;
-
-  // Financial Industry Regulatory Authority rules. Governs
-  // broker-dealers and their communications/data handling.
-  REGULATORY_FRAMEWORK_FINRA = 8;
-}
-
-// ComplianceObligation captures a specific requirement that the
-// regulatory framework imposes, expressed in terms ACAP can enforce.
-// These are NOT the full text of the regulation — they are the
-// behavioural constraints the agent must observe.
-message ComplianceObligation {
-  // Human-readable identifier for the obligation (e.g.
-  // "HIPAA §164.502(a) — minimum necessary", "GDPR Art. 22 —
-  // automated decision-making"). REQUIRED.
-  string obligation_ref = 1;
-
-  // Which data categories this obligation applies to. REQUIRED.
-  // An obligation may apply to multiple categories (e.g. HIPAA's
-  // minimum necessary rule applies to all PHI, which spans HEALTH,
-  // BIOMETRIC, and potentially IDENTITY).
-  repeated DataCategory affected_categories = 2;
-
-  // Which usage dimensions this obligation constrains. REQUIRED.
-  // E.g. HIPAA minimum necessary constrains ACCESS and THIRD_PARTY_SHARING
-  // but not STORAGE (you can store the full record, you just can't
-  // share more than necessary).
-  repeated UsageDimension affected_dimensions = 3;
-
-  // The minimum sensitivity level this obligation mandates for the
-  // affected (category, dimension) pairs. REQUIRED.
-  // The governance agent MUST NOT auto-approve below this level,
-  // regardless of the principal's personal preferences.
-  //
-  // This is the key insight: the principal might set HEALTH × STORAGE
-  // to LOW (they don't personally care), but HIPAA mandates at least
-  // MEDIUM for PHI storage. The regulatory floor overrides the
-  // principal's preference.
-  CategorySensitivity minimum_sensitivity = 4;
-
-  // Natural-language summary of the obligation for audit reports.
-  // REQUIRED.
-  string description = 5;
-}
-
-// RegulatoryContext declares which regulatory framework applies and
-// what specific obligations it imposes in this context. Published by
-// the callee on PolicyDocument (callee's compliance context) and by
-// the caller on ConsentRecord (principal's compliance context).
-//
-// When both parties declare regulatory contexts, the governance agent
-// applies the UNION of obligations — the stricter constraint wins for
-// any given (category, dimension) pair.
-message RegulatoryContext {
-  // The regulatory framework. REQUIRED.
-  RegulatoryFramework framework = 1;
-
-  // The specific role the declaring party plays under this framework.
-  // REQUIRED. Examples: "data_controller", "data_processor",
-  // "covered_entity", "business_associate", "merchant", "deployer".
-  string role = 2;
-
-  // Specific obligations this framework imposes in this context.
-  // REQUIRED. At least one obligation must be declared.
-  repeated ComplianceObligation obligations = 3;
-
-  // ISO 3166-1 alpha-2 country/region codes where this framework
-  // applies (e.g. "EU", "US", "US-CA"). OPTIONAL.
-  repeated string jurisdictions = 4;
-
-  // Whether this framework requires notification to the principal
-  // at ALL escalation tiers (not just HUMAN_REQUIRED). OPTIONAL.
-  // The EU AI Act and some GDPR interpretations require this.
-  bool always_notify_principal = 5;
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Policy Diff (for version-bump re-consent)
-// ─────────────────────────────────────────────────────────────────────────────
-
-// ClaimDiff describes how a single PolicyClaim changed between two
-// PolicyDocument versions. Agents compute diffs using claim_id stability
-// and the effective_version field on PolicyClaim.
-message ClaimDiff {
-  // claim_id of the affected PolicyClaim. REQUIRED.
-  string claim_id = 1;
-
-  // Human-readable clause reference (e.g. "§3.4.2"). REQUIRED.
-  string clause_ref = 2;
-
-  // The type of change. REQUIRED.
-  ClaimChangeType change_type = 3;
-
-  // Natural-language summary of the change, generated by the calling agent.
-  // Intended for human principal review on escalation. REQUIRED.
-  string summary = 4;
-
-  // The previous rule_type, action, asset, and constraint (if modified).
-  // OPTIONAL — present only when change_type is MODIFIED.
-  optional string previous_rule_type = 5;
-  optional string previous_action = 6;
-  optional string previous_asset = 7;
-  optional string previous_constraint = 8;
-
-  // The new rule_type, action, asset, and constraint (if modified or added).
-  // OPTIONAL — present only when change_type is ADDED or MODIFIED.
-  optional string new_rule_type = 9;
-  optional string new_action = 10;
-  optional string new_asset = 11;
-  optional string new_constraint = 12;
-}
-
-// ClaimChangeType describes how a claim changed across versions.
-enum ClaimChangeType {
-  CLAIM_CHANGE_TYPE_UNSPECIFIED = 0;
-
-  // A new claim was introduced in this version.
-  CLAIM_CHANGE_TYPE_ADDED = 1;
-
-  // An existing claim was removed (claim_id retired).
-  CLAIM_CHANGE_TYPE_REMOVED = 2;
-
-  // An existing claim's rule_type, action, asset, or constraint changed.
-  // The claim_id is retired and a new id assigned per spec rules, but the
-  // diff links old and new via clause_ref for human comprehension.
-  CLAIM_CHANGE_TYPE_MODIFIED = 3;
-}
-
-// PolicyDiff summarises all changes between two PolicyDocument versions.
-// Computed by the calling agent and attached to the ConsentRecord on
-// version-bump re-consent.
-message PolicyDiff {
-  // Semver of the previous PolicyDocument. REQUIRED.
-  string from_version = 1;
-
-  // Semver of the new PolicyDocument. REQUIRED.
-  string to_version = 2;
-
-  // Per-claim diffs. REQUIRED. At least one entry must be present.
-  repeated ClaimDiff diffs = 3;
-
-  // Agent-generated natural-language summary of the overall impact,
-  // suitable for presentation to the human principal. REQUIRED.
-  string impact_summary = 4;
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
 // Consent Record
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -644,11 +366,11 @@ message ConsentRecord {
   // ISO 8601 UTC datetime or a sentinel value indicating when this record
   // expires. REQUIRED.
   // Sentinel values:
-  //   "on_version_bump"      — invalidated when callee publishes a new
+  //   "on_version_bump"     , invalidated when callee publishes a new
   //                            PolicyDocument version.
-  //   "on_capability_change" — invalidated when the caller's
+  //   "on_capability_change", invalidated when the caller's
   //                            caller_capability_hash changes.
-  //   "on_any_change"        — invalidated on either version bump OR
+  //   "on_any_change"       , invalidated on either version bump OR
   //                            capability change (strictest).
   string valid_until = 10;
 
@@ -662,18 +384,13 @@ message ConsentRecord {
   // accountability chain required by UETA §14.
   optional string principal_id = 12;
 
-  // Structured diff between the previous and current PolicyDocument versions.
-  // REQUIRED when prev_record_id is non-null (i.e. this is a re-consent after
-  // a version bump). Enables the agent to present a precise change summary
-  // to the human principal on escalation rather than the full document.
-  optional PolicyDiff policy_diff = 13;
 
   // SHA-256 hex digest of the calling agent's capability fingerprint at the
   // time of consent. The fingerprint SHOULD be computed over the agent's
   // model identifier, tool/skill manifest, and reasoning configuration.
   // REQUIRED.
   //
-  // Rationale: agents are ephemeral — they are spawned, updated, and
+  // Rationale: agents are ephemeral, they are spawned, updated, and
   // terminated unlike persistent human accounts. A model update, new tool
   // addition, or context window change may alter the agent's ability to
   // reason about policy claims. When the fingerprint changes, the existing
@@ -702,55 +419,10 @@ message ConsentRecord {
   // Absent on the initial consent record.
   optional ReconsentTrigger reconsent_trigger = 15;
 
-  // Escalation assessment performed during re-consent. Records who reviewed
-  // the change and at what tier. OPTIONAL — present only on re-consent
-  // records (when reconsent_trigger is set).
-  optional EscalationAssessment escalation = 16;
-
   // Cryptographic anchor to an external append-only ledger. OPTIONAL.
   // When present, provides third-party tamper evidence beyond what JWS
   // signatures alone can guarantee. See ChainAnchor for details.
   optional ChainAnchor chain_anchor = 17;
-
-  // The human principal's data-category sensitivity preferences at the
-  // time of consent. OPTIONAL but RECOMMENDED.
-  //
-  // These preferences inform the governance agent's escalation decisions:
-  // a claim tagged with a HIGH-sensitivity category is always escalated
-  // to the human principal, regardless of other materiality signals. This
-  // allows context-dependent consent — the same principal may set BIOMETRIC
-  // to HIGH for a cosmetic surgeon but LOW for a government passport office
-  // where photo capture is expected and regulated.
-  //
-  // When absent, the governance agent falls back to its default materiality
-  // criteria (§3.5 of the preprint). When present, category sensitivity
-  // OVERRIDES the governance agent's assessment for claims in that category:
-  // HIGH always escalates, LOW always permits auto-approval (for that
-  // category factor), MEDIUM triggers notification without blocking.
-  repeated CategoryPreference category_preferences = 18;
-
-  // The calling agent's principal's regulatory context. OPTIONAL.
-  //
-  // Declares which regulatory frameworks the principal operates under
-  // and what compliance obligations those frameworks impose. The
-  // governance agent uses these alongside the callee's regulatory
-  // contexts (from PolicyDocument) to compute the effective compliance
-  // floor for each (category, dimension) pair.
-  //
-  // The effective sensitivity for a (category, dimension) pair is:
-  //   max(principal_preference, callee_obligation, caller_obligation)
-  //
-  // where the total order is LOW < MEDIUM < HIGH. Missing entries
-  // default to LOW. This ensures that the strictest constraint from
-  // any source (principal, callee regulation, caller regulation) governs.
-  //
-  // Example: a hospital (HIPAA covered entity) calling an analytics
-  // agent. The hospital's regulatory context declares HIPAA with
-  // minimum_sensitivity=HIGH for (HEALTH, THIRD_PARTY_SHARING). Even
-  // if the analytics agent's policy permits data sharing and the
-  // principal personally sets HEALTH × THIRD_PARTY_SHARING to LOW,
-  // the HIPAA floor overrides both — the governance agent MUST escalate.
-  repeated RegulatoryContext regulatory_contexts = 19;
 }
 
 // ReconsentTrigger indicates what caused a new ConsentRecord to be created.
@@ -769,99 +441,6 @@ enum ReconsentTrigger {
 
   // The previous ConsentRecord expired (valid_until timestamp reached).
   RECONSENT_TRIGGER_EXPIRY = 4;
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Tiered Escalation (Governance Agent)
-// ─────────────────────────────────────────────────────────────────────────────
-
-// EscalationTier indicates who reviewed and approved the re-consent decision.
-//
-// ACAP implements a dual escalation strategy to avoid alert fatigue:
-// not every policy bump or capability change warrants human attention.
-// A governance agent (a designated supervisory agent) evaluates the
-// materiality of changes and auto-approves immaterial ones. Only material
-// changes escalate to the human principal.
-//
-// Escalation path:
-//   Calling Agent detects change
-//     → Governance Agent evaluates materiality
-//       → AUTO_APPROVED (immaterial) or GOVERNANCE_REVIEWED (material but
-//         within governance policy) → proceed without human
-//       → HUMAN_REQUIRED (material + high stakes) → block and present
-//         PolicyDiff to human principal
-enum EscalationTier {
-  ESCALATION_TIER_UNSPECIFIED = 0;
-
-  // The governance agent determined the change is immaterial and
-  // auto-approved without review. Examples: cosmetic clause_ref changes,
-  // typo fixes in natural_language_uri, no new permissions/prohibitions.
-  ESCALATION_TIER_AUTO_APPROVED = 1;
-
-  // The governance agent reviewed the change and approved it within its
-  // delegated authority. The change is material but falls within the
-  // governance agent's pre-approved policy (e.g. minor constraint
-  // tightening, new obligation that aligns with existing principal mandate).
-  ESCALATION_TIER_GOVERNANCE_REVIEWED = 2;
-
-  // The change requires human principal review. The governance agent
-  // determined it exceeds its delegated authority. Examples: new
-  // prohibitions, relaxed constraints on data use, rule_type changes
-  // from permission to obligation, any claim with escalate_on_deny.
-  ESCALATION_TIER_HUMAN_REQUIRED = 3;
-}
-
-// MaterialitySignal records a single factor in the governance agent's
-// materiality assessment. Enables auditors to understand WHY a particular
-// escalation tier was chosen.
-message MaterialitySignal {
-  // Which aspect of the change this signal evaluates. REQUIRED.
-  string factor = 1;
-
-  // The governance agent's assessment: "material" or "immaterial". REQUIRED.
-  string assessment = 2;
-
-  // Natural-language reasoning for the assessment. REQUIRED.
-  string reasoning = 3;
-}
-
-// EscalationAssessment is the governance agent's complete evaluation of a
-// re-consent event. Attached to the ConsentRecord to provide an auditable
-// record of the escalation decision.
-message EscalationAssessment {
-  // The escalation tier determined by the governance agent. REQUIRED.
-  EscalationTier tier = 1;
-
-  // DID or HTTPS URL identifying the governance agent that performed the
-  // assessment. REQUIRED.
-  string governance_agent_id = 2;
-
-  // ISO 8601 UTC datetime of the assessment. REQUIRED.
-  string assessed_at = 3;
-
-  // Individual materiality signals that informed the tier decision. REQUIRED.
-  // At least one signal must be present.
-  repeated MaterialitySignal signals = 4;
-
-  // Natural-language summary of the overall assessment, suitable for audit.
-  // REQUIRED.
-  string summary = 5;
-
-  // Whether the human principal was notified (even if not required to act).
-  // REQUIRED. Callees operating under EU AI Act obligations may require
-  // notification at all tiers.
-  bool principal_notified = 6;
-
-  // DID or HTTPS URL of the human principal who reviewed, if tier is
-  // HUMAN_REQUIRED. OPTIONAL.
-  optional string reviewed_by = 7;
-
-  // ISO 8601 UTC datetime of human review, if applicable. OPTIONAL.
-  optional string reviewed_at = 8;
-
-  // JWS signature of the governance agent over this assessment. OPTIONAL
-  // but RECOMMENDED for non-repudiation.
-  optional string governance_signature = 9;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -989,7 +568,7 @@ enum AdherenceDecision {
 // ACAP is ledger-agnostic. The anchor may point to a public blockchain
 // (Ethereum, Polygon, etc.), a permissioned ledger (Hyperledger Fabric),
 // or any append-only transparency log (e.g. RFC 9162 Certificate
-// Transparency). The protocol defines WHAT is anchored and WHEN — not
+// Transparency). The protocol defines WHAT is anchored and WHEN, not
 // WHERE.
 //
 // Anchoring is OPTIONAL. Deployments that do not require third-party
@@ -1045,7 +624,7 @@ enum AnchorStrategy {
   ANCHOR_STRATEGY_MERKLE_BATCH = 2;
 
   // Only consent records (not adherence events) are anchored.
-  // Balances cost and assurance — consent events are infrequent but
+  // Balances cost and assurance, consent events are infrequent but
   // legally significant; adherence events are frequent but lower stakes.
   ANCHOR_STRATEGY_CONSENT_ONLY = 3;
 }
@@ -1090,16 +669,7 @@ service ConsentService {
   // the caller's current bound policy without recording an event.
   // Useful for pre-flight checks before expensive operations.
   rpc CheckAdherence(CheckAdherenceRequest) returns (CheckAdherenceResponse);
-
-  // GenerateAuditReport produces a plain-English audit report for a
-  // caller-callee pair over a time range. The report walks the consent
-  // chain and adherence trail chronologically, rendering each event as
-  // a human-readable narrative entry. Designed for compliance officers,
-  // legal teams, and regulators who need to understand what was agreed,
-  // when, and how it was enforced — without reading proto messages.
-  rpc GenerateAuditReport(AuditReportRequest) returns (AuditReport);
 }
-
 // ─── GetPolicy ───────────────────────────────────────────────────────────────
 
 message GetPolicyRequest {
@@ -1206,205 +776,3 @@ message CheckAdherenceResponse {
   string reasoning = 4;
 }
 
-// ─── GenerateAuditReport ────────────────────────────────────────────────────
-
-// AuditReportRequest specifies the scope of the audit report.
-message AuditReportRequest {
-  // DID or URL of the calling agent. REQUIRED.
-  string caller_agent_id = 1;
-
-  // DID or URL of the callee agent. REQUIRED.
-  string callee_agent_id = 2;
-
-  // ISO 8601 UTC datetime — start of the audit window. OPTIONAL.
-  // If absent, starts from the first consent record.
-  optional string from_timestamp = 3;
-
-  // ISO 8601 UTC datetime — end of the audit window. OPTIONAL.
-  // If absent, ends at the current time.
-  optional string to_timestamp = 4;
-
-  // Filter to specific policy versions. OPTIONAL.
-  // If absent, covers all versions in the time range.
-  repeated string policy_versions = 5;
-
-  // Filter to specific claim IDs. OPTIONAL.
-  // If absent, covers all claims.
-  repeated string claim_ids = 6;
-
-  // Filter to specific adherence decisions. OPTIONAL.
-  // Useful for "show me all denials" queries.
-  repeated AdherenceDecision decision_filter = 7;
-
-  // Output language for the narrative (BCP 47 tag, e.g. "en", "de").
-  // Defaults to "en". OPTIONAL.
-  optional string language = 8;
-}
-
-// AuditReport is a structured, human-readable report that maps machine-
-// readable consent chain entries to plain-English narrative. Each entry
-// in the timeline corresponds to a ConsentRecord or AdherenceEvent,
-// rendered with full context: what policy version was active, what
-// claims were evaluated, what decisions were made, and why.
-message AuditReport {
-  // Unique identifier for this report. REQUIRED.
-  string report_id = 1;
-
-  // ISO 8601 UTC datetime when this report was generated. REQUIRED.
-  string generated_at = 2;
-
-  // The caller-callee pair this report covers.
-  string caller_agent_id = 3;
-  string callee_agent_id = 4;
-
-  // Time range covered by the report.
-  string from_timestamp = 5;
-  string to_timestamp = 6;
-
-  // Executive summary — a 2-3 paragraph plain-English overview of the
-  // entire consent relationship over the audit window. REQUIRED.
-  // Example: "Between March 1 and March 5 2026, Agent X operated under
-  // two versions of Agent Y's usage policy (v2.0.0 and v2.1.0). Agent X
-  // accepted both versions, with one disputed claim in v2.1.0 regarding
-  // data aggregation. Of 47 skill invocations, 45 were permitted and 2
-  // were denied under §3.4.2 (prohibition on behavioural profiling)."
-  string executive_summary = 7;
-
-  // Chronological timeline of all consent and adherence events. REQUIRED.
-  repeated AuditEntry timeline = 8;
-
-  // Per-claim summary statistics. REQUIRED.
-  repeated ClaimAuditSummary claim_summaries = 9;
-
-  // Per-version summary. REQUIRED.
-  repeated VersionAuditSummary version_summaries = 10;
-}
-
-// AuditEntry is a single event in the audit timeline, rendered as a
-// human-readable narrative entry with machine-readable cross-references.
-message AuditEntry {
-  // Chronological index in the timeline (1-based). REQUIRED.
-  int32 sequence = 1;
-
-  // ISO 8601 UTC datetime of the event. REQUIRED.
-  string timestamp = 2;
-
-  // The type of event. REQUIRED.
-  AuditEntryType entry_type = 3;
-
-  // Plain-English narrative describing the event. REQUIRED.
-  // Example (consent): "Agent X accepted Agent Y's usage policy v2.1.0,
-  //   acknowledging 5 claims including a new prohibition on session data
-  //   aggregation (§3.4.2). This was the agent's second consent record,
-  //   superseding the v2.0.0 acceptance from March 1. The governance
-  //   agent auto-approved the version change (immaterial: no new
-  //   prohibitions beyond existing mandate)."
-  // Example (adherence): "Agent X evaluated §3.4.2 before invoking
-  //   'aggregate_sessions'. Decision: DENY. Reasoning: 'Action maps to
-  //   odrl:aggregate on pii:session_data, prohibited under §3.4.2 where
-  //   purpose = behavioural_profiling.'"
-  // Example (escalation): "Policy v2.1.0 introduced a new prohibition
-  //   (§3.4.2). The governance agent assessed this as material and
-  //   escalated to the human principal, who approved on March 3 at 14:32."
-  string narrative = 4;
-
-  // Cross-reference to the underlying record. OPTIONAL.
-  optional string consent_record_id = 5;
-  optional string adherence_event_id = 6;
-
-  // Policy version active at the time of this event. REQUIRED.
-  string policy_version = 7;
-
-  // Claim IDs referenced by this event. OPTIONAL.
-  repeated string referenced_claim_ids = 8;
-}
-
-// AuditEntryType categorises timeline entries.
-enum AuditEntryType {
-  AUDIT_ENTRY_TYPE_UNSPECIFIED = 0;
-
-  // Initial consent recorded.
-  AUDIT_ENTRY_TYPE_INITIAL_CONSENT = 1;
-
-  // Re-consent after policy version bump.
-  AUDIT_ENTRY_TYPE_RECONSENT_POLICY = 2;
-
-  // Re-consent after capability change.
-  AUDIT_ENTRY_TYPE_RECONSENT_CAPABILITY = 3;
-
-  // Adherence event — action permitted.
-  AUDIT_ENTRY_TYPE_ADHERENCE_PERMIT = 4;
-
-  // Adherence event — action denied.
-  AUDIT_ENTRY_TYPE_ADHERENCE_DENY = 5;
-
-  // Adherence event — escalated to principal.
-  AUDIT_ENTRY_TYPE_ADHERENCE_ESCALATE = 6;
-
-  // Governance agent auto-approved a change.
-  AUDIT_ENTRY_TYPE_GOVERNANCE_AUTO = 7;
-
-  // Governance agent reviewed and approved.
-  AUDIT_ENTRY_TYPE_GOVERNANCE_REVIEWED = 8;
-
-  // Human principal reviewed and acted.
-  AUDIT_ENTRY_TYPE_HUMAN_REVIEW = 9;
-
-  // Consent invalidated (version bump or capability change).
-  AUDIT_ENTRY_TYPE_CONSENT_INVALIDATED = 10;
-}
-
-// ClaimAuditSummary provides per-claim statistics over the audit window.
-message ClaimAuditSummary {
-  // claim_id. REQUIRED.
-  string claim_id = 1;
-
-  // clause_ref for human reference. REQUIRED.
-  string clause_ref = 2;
-
-  // Rule type (permission, prohibition, obligation). REQUIRED.
-  string rule_type = 3;
-
-  // Total adherence events referencing this claim. REQUIRED.
-  int32 total_evaluations = 4;
-
-  // Breakdown by decision.
-  int32 permit_count = 5;
-  int32 deny_count = 6;
-  int32 escalate_count = 7;
-
-  // Plain-English summary of this claim's enforcement history. REQUIRED.
-  // Example: "§3.4.2 (prohibition on session aggregation) was evaluated
-  // 12 times. 10 actions were permitted (non-aggregation operations),
-  // 2 were denied (attempted aggregation for profiling purposes)."
-  string summary = 8;
-}
-
-// VersionAuditSummary provides per-policy-version statistics.
-message VersionAuditSummary {
-  // Policy version. REQUIRED.
-  string version = 1;
-
-  // Time range this version was active. REQUIRED.
-  string effective_from = 2;
-  string effective_until = 3;
-
-  // Number of claims in this version. REQUIRED.
-  int32 claim_count = 4;
-
-  // Consent decision for this version. REQUIRED.
-  string consent_decision = 5;
-
-  // Escalation tier applied (for re-consent). OPTIONAL.
-  optional string escalation_tier = 6;
-
-  // Total adherence events under this version. REQUIRED.
-  int32 total_adherence_events = 7;
-
-  // Plain-English summary. REQUIRED.
-  // Example: "Policy v2.1.0 was active from March 3 to present (2 days).
-  // Agent X conditionally accepted it, disputing §3.4.2. 47 adherence
-  // events were recorded: 45 permits, 2 denials. The governance agent
-  // auto-approved the transition from v2.0.0."
-  string summary = 8;
-}

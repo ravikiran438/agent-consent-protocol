@@ -8,7 +8,7 @@
 
 ## Context
 
-Traditional consent systems—designed for humans—produce *proof of
+Traditional consent systems, designed for humans, produce *proof of
 acceptance*: a timestamp, an identity record, and a version identifier
 proving that a party clicked "I agree" to a document at a point in time.
 This model has two structural weaknesses:
@@ -59,7 +59,7 @@ meaningful.
 
 - `ParsedClaim` establishes that the agent processed every clause. An agent
   that records `understood: true` for a prohibition and then violates it has
-  demonstrably acted in bad faith—a higher standard of liability than a
+  demonstrably acted in bad faith, a higher standard of liability than a
   human who clicked without reading.
 - `AdherenceEvent.reasoning` is the mechanism that makes agent behaviour
   auditable at the action level. It is the ACAP equivalent of a decision log

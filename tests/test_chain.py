@@ -27,7 +27,7 @@ def test_single_record_ok(first_record, policy_v1_hashed):
 
 
 def test_missing_parsed_claim_is_rejected(first_record, policy_v1_hashed):
-    # drop claim-b from parsed_claims — this is the §3.2 invariant violation
+    # drop claim-b from parsed_claims, this is the §3.2 invariant violation
     first_record.parsed_claims = [
         p for p in first_record.parsed_claims if p.claim_id != "claim-b"
     ]
@@ -64,7 +64,7 @@ def test_conditional_without_dispute_is_rejected(first_record, policy_v1_hashed)
     """A conditional record with no disputed claims is malformed.
 
     The point of 'conditional' is to carry at least one dispute. An agent
-    that accepts everything should use 'accepted' — otherwise the callee
+    that accepts everything should use 'accepted', otherwise the callee
     can't tell what to gate.
     """
     first_record.decision = ConsentDecision.CONDITIONAL

@@ -9,10 +9,16 @@ ACAP extends the [Agent2Agent (A2A) Protocol](https://a2a-protocol.org/latest/)
 with a first-class mechanism for versioned, machine-readable usage policy
 attachment and append-only consent auditing between AI agents.
 
-> **Companion protocol:** [Phala](https://arxiv.org/abs/forthcoming) (in preparation) addresses
-> the outcome feedback side of the same lifecycle. ACAP governs entry — the
-> conditions under which an agent may act. Phala measures exit — whether the
-> action served the principal. Together they bracket agent accountability.
+This repository is organised into two tiers:
+
+- **Core** (this repository root), the three consent primitives, the
+  TLA+ specification, the protobuf schema, and the reference Python
+  implementation. Stable, tested, citable.
+- **[Extensions](./extensions/)**, proposed extensions (governance
+  tiering, category preferences, regulatory context, audit projection).
+  Each extension is maintained independently with its own `README.md`
+  and `STATUS.md`. Extensions are not part of the published core spec
+  and may change.
 
 ## The Problem
 
@@ -25,7 +31,7 @@ Usage policy governs **how** and **under what conditions** a permitted action
 may be taken. These are different layers and require different treatment.
 
 Under UETA §14, the human principal is legally bound by whatever terms their
-agent accepts—without necessarily being aware. ACAP closes this gap.
+agent accepts, without necessarily being aware. ACAP closes this gap.
 
 ## The Solution
 
@@ -67,7 +73,7 @@ acting and here is my reasoning").
     "extensions": [
       {
         "uri": "https://github.com/ravikiran438/agent-consent-protocol/v1",
-        "description": "Supports the Agent Consent Protocol.",
+        "description": "Supports the Agent Consent and Adherence Protocol.",
         "required": true
       }
     ]
@@ -135,28 +141,27 @@ record = ConsentRecord(
 ## Repository Layout
 
 ```
-ACAP/
-├── specification/
-│   ├── consent.proto          # Normative proto3 definition (source of truth)
-│   ├── ConsentLifecycle.tla   # TLA+ model of the consent lifecycle
-│   └── ConsentLifecycle.cfg   # TLC configuration
+agent-consent-protocol/
+├── specification/              # Core protocol (normative)
+│   ├── consent.proto           # proto3 definition (source of truth)
+│   ├── ConsentLifecycle.tla    # TLA+ model
+│   └── ConsentLifecycle.cfg    # TLC configuration
 ├── docs/
-│   ├── specification.md       # Full protocol specification
-│   └── topics/                # Conceptual deep-dives
+│   └── specification.md        # Full protocol specification
 ├── src/acap/
-│   ├── types/                 # Pydantic type library (Python)
-│   │   ├── policy_document.py
-│   │   ├── consent_record.py
-│   │   └── adherence_event.py
-│   └── validators/            # Reference validators for chain + trail integrity
-│       ├── hash.py            # Canonical JSON + SHA-256 for PolicyDocument
-│       ├── chain.py           # ConsentRecord chain validator (§3.2)
-│       └── trail.py           # AdherenceEvent trail validator (§3.3–§3.4)
-├── tests/                     # pytest suite for the validators
-├── samples/python/            # Reference agent.json with usage_policy
-└── adrs/                      # Architecture Decision Records
-    ├── 001-usage-policy-as-agent-card-extension.md
-    └── 002-proof-of-adherence-over-proof-of-acceptance.md
+│   ├── types/                  # Pydantic type library
+│   └── validators/             # Hash / chain / trail validators
+├── tests/                      # pytest suite for the validators
+├── samples/python/             # Reference agent.json with usage_policy
+├── adrs/                       # Architecture Decision Records
+│   ├── 001-usage-policy-as-agent-card-extension.md
+│   └── 002-proof-of-adherence-over-proof-of-acceptance.md
+├── papers/                     # Preprint PDFs
+└── extensions/                 # Proposed protocol extensions (non-normative)
+    ├── governance-tiering/
+    ├── category-preferences/
+    ├── regulatory-context/
+    └── audit-projection/
 ```
 
 ## Formal Verification
@@ -171,7 +176,7 @@ prover such as TLAPS.
 ## Reference Validators
 
 The Python package under `src/acap/validators/` implements the integrity
-checks described in the paper. These are deliberately small — enough to
+checks described in the paper. These are deliberately small, enough to
 prove every normative claim has working code, without committing to a
 full RPC implementation.
 
@@ -183,18 +188,18 @@ pytest
 
 Scope:
 
-- `hash.py` — canonical JSON + SHA-256 (§3.1), with the hash-field-zeroing
+- `hash.py`, canonical JSON + SHA-256 (§3.1), with the hash-field-zeroing
   convention to break the self-reference.
-- `chain.py` — `ConsentRecord` chain validator (§3.2). Checks link integrity,
+- `chain.py`, `ConsentRecord` chain validator (§3.2). Checks link integrity,
   same-pair invariant, full claim coverage, and hash match.
-- `trail.py` — `AdherenceEvent` trail validator (§3.3–§3.4). Checks link
+- `trail.py`, `AdherenceEvent` trail validator (§3.3–§3.4). Checks link
   integrity, S5/S6 (no permit on disputed claims), and claim-id sanity.
 
 Signature verification (JWS) is out of scope for v0.1; see §6.1 on the
 threat model.
 
 The TLA+ specification is described in the companion paper
-([Anumati](https://arxiv.org/abs/2503.XXXXX), §5).
+([Anumati](https://doi.org/10.5281/zenodo.18950892), §3.5).
 
 ## Contributing
 

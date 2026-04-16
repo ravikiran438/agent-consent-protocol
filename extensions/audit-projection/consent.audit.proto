@@ -1,0 +1,225 @@
+// Copyright 2026 Ravi Kiran Kadaboina
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+// ACAP extension: audit-projection
+// Proposed extension. See ../extensions/audit-projection/README.md.
+
+syntax = "proto3";
+
+package a2a.consent.v1;
+
+import "consent.proto";
+
+// ─── GenerateAuditReport ────────────────────────────────────────────────────
+
+// AuditReportRequest specifies the scope of the audit report.
+message AuditReportRequest {
+  // DID or URL of the calling agent. REQUIRED.
+  string caller_agent_id = 1;
+
+  // DID or URL of the callee agent. REQUIRED.
+  string callee_agent_id = 2;
+
+  // ISO 8601 UTC datetime, start of the audit window. OPTIONAL.
+  // If absent, starts from the first consent record.
+  optional string from_timestamp = 3;
+
+  // ISO 8601 UTC datetime, end of the audit window. OPTIONAL.
+  // If absent, ends at the current time.
+  optional string to_timestamp = 4;
+
+  // Filter to specific policy versions. OPTIONAL.
+  // If absent, covers all versions in the time range.
+  repeated string policy_versions = 5;
+
+  // Filter to specific claim IDs. OPTIONAL.
+  // If absent, covers all claims.
+  repeated string claim_ids = 6;
+
+  // Filter to specific adherence decisions. OPTIONAL.
+  // Useful for "show me all denials" queries.
+  repeated AdherenceDecision decision_filter = 7;
+
+  // Output language for the narrative (BCP 47 tag, e.g. "en", "de").
+  // Defaults to "en". OPTIONAL.
+  optional string language = 8;
+}
+
+// AuditReport is a structured, human-readable report that maps machine-
+// readable consent chain entries to plain-English narrative. Each entry
+// in the timeline corresponds to a ConsentRecord or AdherenceEvent,
+// rendered with full context: what policy version was active, what
+// claims were evaluated, what decisions were made, and why.
+message AuditReport {
+  // Unique identifier for this report. REQUIRED.
+  string report_id = 1;
+
+  // ISO 8601 UTC datetime when this report was generated. REQUIRED.
+  string generated_at = 2;
+
+  // The caller-callee pair this report covers.
+  string caller_agent_id = 3;
+  string callee_agent_id = 4;
+
+  // Time range covered by the report.
+  string from_timestamp = 5;
+  string to_timestamp = 6;
+
+  // Executive summary, a 2-3 paragraph plain-English overview of the
+  // entire consent relationship over the audit window. REQUIRED.
+  // Example: "Between March 1 and March 5 2026, Agent X operated under
+  // two versions of Agent Y's usage policy (v2.0.0 and v2.1.0). Agent X
+  // accepted both versions, with one disputed claim in v2.1.0 regarding
+  // data aggregation. Of 47 skill invocations, 45 were permitted and 2
+  // were denied under §3.4.2 (prohibition on behavioural profiling)."
+  string executive_summary = 7;
+
+  // Chronological timeline of all consent and adherence events. REQUIRED.
+  repeated AuditEntry timeline = 8;
+
+  // Per-claim summary statistics. REQUIRED.
+  repeated ClaimAuditSummary claim_summaries = 9;
+
+  // Per-version summary. REQUIRED.
+  repeated VersionAuditSummary version_summaries = 10;
+}
+
+// AuditEntry is a single event in the audit timeline, rendered as a
+// human-readable narrative entry with machine-readable cross-references.
+message AuditEntry {
+  // Chronological index in the timeline (1-based). REQUIRED.
+  int32 sequence = 1;
+
+  // ISO 8601 UTC datetime of the event. REQUIRED.
+  string timestamp = 2;
+
+  // The type of event. REQUIRED.
+  AuditEntryType entry_type = 3;
+
+  // Plain-English narrative describing the event. REQUIRED.
+  // Example (consent): "Agent X accepted Agent Y's usage policy v2.1.0,
+  //   acknowledging 5 claims including a new prohibition on session data
+  //   aggregation (§3.4.2). This was the agent's second consent record,
+  //   superseding the v2.0.0 acceptance from March 1. The governance
+  //   agent auto-approved the version change (immaterial: no new
+  //   prohibitions beyond existing mandate)."
+  // Example (adherence): "Agent X evaluated §3.4.2 before invoking
+  //   'aggregate_sessions'. Decision: DENY. Reasoning: 'Action maps to
+  //   odrl:aggregate on pii:session_data, prohibited under §3.4.2 where
+  //   purpose = behavioural_profiling.'"
+  // Example (escalation): "Policy v2.1.0 introduced a new prohibition
+  //   (§3.4.2). The governance agent assessed this as material and
+  //   escalated to the human principal, who approved on March 3 at 14:32."
+  string narrative = 4;
+
+  // Cross-reference to the underlying record. OPTIONAL.
+  optional string consent_record_id = 5;
+  optional string adherence_event_id = 6;
+
+  // Policy version active at the time of this event. REQUIRED.
+  string policy_version = 7;
+
+  // Claim IDs referenced by this event. OPTIONAL.
+  repeated string referenced_claim_ids = 8;
+}
+
+// AuditEntryType categorises timeline entries.
+enum AuditEntryType {
+  AUDIT_ENTRY_TYPE_UNSPECIFIED = 0;
+
+  // Initial consent recorded.
+  AUDIT_ENTRY_TYPE_INITIAL_CONSENT = 1;
+
+  // Re-consent after policy version bump.
+  AUDIT_ENTRY_TYPE_RECONSENT_POLICY = 2;
+
+  // Re-consent after capability change.
+  AUDIT_ENTRY_TYPE_RECONSENT_CAPABILITY = 3;
+
+  // Adherence event, action permitted.
+  AUDIT_ENTRY_TYPE_ADHERENCE_PERMIT = 4;
+
+  // Adherence event, action denied.
+  AUDIT_ENTRY_TYPE_ADHERENCE_DENY = 5;
+
+  // Adherence event, escalated to principal.
+  AUDIT_ENTRY_TYPE_ADHERENCE_ESCALATE = 6;
+
+  // Governance agent auto-approved a change.
+  AUDIT_ENTRY_TYPE_GOVERNANCE_AUTO = 7;
+
+  // Governance agent reviewed and approved.
+  AUDIT_ENTRY_TYPE_GOVERNANCE_REVIEWED = 8;
+
+  // Human principal reviewed and acted.
+  AUDIT_ENTRY_TYPE_HUMAN_REVIEW = 9;
+
+  // Consent invalidated (version bump or capability change).
+  AUDIT_ENTRY_TYPE_CONSENT_INVALIDATED = 10;
+}
+
+// ClaimAuditSummary provides per-claim statistics over the audit window.
+message ClaimAuditSummary {
+  // claim_id. REQUIRED.
+  string claim_id = 1;
+
+  // clause_ref for human reference. REQUIRED.
+  string clause_ref = 2;
+
+  // Rule type (permission, prohibition, obligation). REQUIRED.
+  string rule_type = 3;
+
+  // Total adherence events referencing this claim. REQUIRED.
+  int32 total_evaluations = 4;
+
+  // Breakdown by decision.
+  int32 permit_count = 5;
+  int32 deny_count = 6;
+  int32 escalate_count = 7;
+
+  // Plain-English summary of this claim's enforcement history. REQUIRED.
+  // Example: "§3.4.2 (prohibition on session aggregation) was evaluated
+  // 12 times. 10 actions were permitted (non-aggregation operations),
+  // 2 were denied (attempted aggregation for profiling purposes)."
+  string summary = 8;
+}
+
+// VersionAuditSummary provides per-policy-version statistics.
+message VersionAuditSummary {
+  // Policy version. REQUIRED.
+  string version = 1;
+
+  // Time range this version was active. REQUIRED.
+  string effective_from = 2;
+  string effective_until = 3;
+
+  // Number of claims in this version. REQUIRED.
+  int32 claim_count = 4;
+
+  // Consent decision for this version. REQUIRED.
+  string consent_decision = 5;
+
+  // Escalation tier applied (for re-consent). OPTIONAL.
+  optional string escalation_tier = 6;
+
+  // Total adherence events under this version. REQUIRED.
+  int32 total_adherence_events = 7;
+
+  // Plain-English summary. REQUIRED.
+  // Example: "Policy v2.1.0 was active from March 3 to present (2 days).
+  // Agent X conditionally accepted it, disputing §3.4.2. 47 adherence
+  // events were recorded: 45 permits, 2 denials. The governance agent
+  // auto-approved the transition from v2.0.0."
+  string summary = 8;
+}

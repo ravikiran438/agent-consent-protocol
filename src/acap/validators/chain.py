@@ -20,10 +20,10 @@ invariants from Anumati §3.2:
   1. The first record has prev_record_id == None; every subsequent
      record's prev_record_id points to the previous record's id.
   2. All records share the same (caller_agent_id, callee_agent_id)
-     pair — a chain is per-pair.
+     pair, a chain is per-pair.
   3. Every PolicyClaim in the referenced PolicyDocument has a matching
      ParsedClaim in the ConsentRecord. This is the "critical invariant"
-     from §3.2 — agents can't silently skip inconvenient clauses.
+     from §3.2, agents can't silently skip inconvenient clauses.
   4. When a PolicyDocument is provided, the record's policy_hash matches
      the document's hash (tamper evidence).
 
@@ -52,7 +52,7 @@ def validate_consent_record(
     If ``policy`` is given, we also check claim coverage and hash match.
     Raises ChainValidationError on failure.
     """
-    # Every claim needs a parsed counterpart — this is the invariant
+    # Every claim needs a parsed counterpart, this is the invariant
     # that distinguishes proof-of-adherence from a boolean accept.
     if policy is not None:
         policy_claim_ids = {c.claim_id for c in policy.claims}
@@ -72,7 +72,7 @@ def validate_consent_record(
                 f"not in PolicyDocument {policy.version}: {sorted(extra)}"
             )
 
-        # Hash match — guards against a record that was signed against
+        # Hash match, guards against a record that was signed against
         # a different version of the document than the one we have.
         expected_hash = compute_policy_hash(policy)
         if record.policy_hash != expected_hash:
@@ -89,7 +89,7 @@ def validate_consent_record(
                 f"version {policy.version!r}"
             )
 
-    # Conditional consent must carry at least one dispute — otherwise
+    # Conditional consent must carry at least one dispute, otherwise
     # the decision is effectively "accepted" and the caller should have
     # used that instead.
     if record.decision.value == "conditional":

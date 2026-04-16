@@ -155,7 +155,7 @@ class UsagePolicyRef(BaseModel):
             "extensions": [
               {
                 "uri": "https://a2aproject.github.io/consent/v1",
-                "description": "Supports the Agent Consent Protocol.",
+                "description": "Supports the Agent Consent and Adherence Protocol.",
                 "required": true
               }
             ]

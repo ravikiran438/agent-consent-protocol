@@ -1,0 +1,149 @@
+// Copyright 2026 Ravi Kiran Kadaboina
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+// ACAP extension: regulatory-context
+// Proposed extension. Pending legal review before normative status.
+// See ../extensions/regulatory-context/README.md for motivation.
+
+syntax = "proto3";
+
+package a2a.consent.v1;
+
+import "consent.proto";
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Regulatory Context (compliance obligation propagation)
+// ─────────────────────────────────────────────────────────────────────────────
+
+// RegulatoryFramework identifies a specific regulatory regime. Agents are
+// NOT the regulated entity, HIPAA governs the covered entity (hospital),
+// PCI-DSS governs the merchant, GDPR governs the data controller. The
+// agent acts ON BEHALF OF the regulated entity. But the agent must know
+// which regime applies so it can:
+//   (a) apply the correct data category constraints (e.g. HIPAA mandates
+//       heightened protections for PHI that go beyond generic HEALTH),
+//   (b) ensure the governance agent's materiality assessment respects
+//       framework-specific requirements, and
+//   (c) produce audit records that satisfy the framework's evidence standard.
+//
+// The relationship is delegation of compliance obligation: the principal
+// (or their organisation) is the regulated party, and the agent inherits
+// specific behavioural constraints through the regulatory context.
+enum RegulatoryFramework {
+  REGULATORY_FRAMEWORK_UNSPECIFIED = 0;
+
+  // EU General Data Protection Regulation. Governs data controllers and
+  // processors handling EU residents' personal data.
+  REGULATORY_FRAMEWORK_GDPR = 1;
+
+  // US Health Insurance Portability and Accountability Act. Governs
+  // covered entities (providers, plans, clearinghouses) and their
+  // business associates handling Protected Health Information (PHI).
+  REGULATORY_FRAMEWORK_HIPAA = 2;
+
+  // Payment Card Industry Data Security Standard. Governs merchants
+  // and service providers handling cardholder data.
+  REGULATORY_FRAMEWORK_PCI_DSS = 3;
+
+  // California Consumer Privacy Act / California Privacy Rights Act.
+  // Governs businesses collecting California residents' personal info.
+  REGULATORY_FRAMEWORK_CCPA = 4;
+
+  // EU AI Act. Governs providers and deployers of AI systems,
+  // with specific transparency and consent requirements for
+  // autonomous agent transactions.
+  REGULATORY_FRAMEWORK_EU_AI_ACT = 5;
+
+  // Children's Online Privacy Protection Act. Governs operators of
+  // websites/services directed at children under 13.
+  REGULATORY_FRAMEWORK_COPPA = 6;
+
+  // SOC 2 Type II. Not a regulation but a widely adopted audit
+  // framework for service organisations.
+  REGULATORY_FRAMEWORK_SOC2 = 7;
+
+  // Financial Industry Regulatory Authority rules. Governs
+  // broker-dealers and their communications/data handling.
+  REGULATORY_FRAMEWORK_FINRA = 8;
+}
+
+// ComplianceObligation captures a specific requirement that the
+// regulatory framework imposes, expressed in terms ACAP can enforce.
+// These are NOT the full text of the regulation, they are the
+// behavioural constraints the agent must observe.
+message ComplianceObligation {
+  // Human-readable identifier for the obligation (e.g.
+  // "HIPAA §164.502(a), minimum necessary", "GDPR Art. 22,
+  // automated decision-making"). REQUIRED.
+  string obligation_ref = 1;
+
+  // Which data categories this obligation applies to. REQUIRED.
+  // An obligation may apply to multiple categories (e.g. HIPAA's
+  // minimum necessary rule applies to all PHI, which spans HEALTH,
+  // BIOMETRIC, and potentially IDENTITY).
+  repeated DataCategory affected_categories = 2;
+
+  // Which usage dimensions this obligation constrains. REQUIRED.
+  // E.g. HIPAA minimum necessary constrains ACCESS and THIRD_PARTY_SHARING
+  // but not STORAGE (you can store the full record, you just can't
+  // share more than necessary).
+  repeated UsageDimension affected_dimensions = 3;
+
+  // The minimum sensitivity level this obligation mandates for the
+  // affected (category, dimension) pairs. REQUIRED.
+  // The governance agent MUST NOT auto-approve below this level,
+  // regardless of the principal's personal preferences.
+  //
+  // This is the key insight: the principal might set HEALTH × STORAGE
+  // to LOW (they don't personally care), but HIPAA mandates at least
+  // MEDIUM for PHI storage. The regulatory floor overrides the
+  // principal's preference.
+  CategorySensitivity minimum_sensitivity = 4;
+
+  // Natural-language summary of the obligation for audit reports.
+  // REQUIRED.
+  string description = 5;
+}
+
+// RegulatoryContext declares which regulatory framework applies and
+// what specific obligations it imposes in this context. Published by
+// the callee on PolicyDocument (callee's compliance context) and by
+// the caller on ConsentRecord (principal's compliance context).
+//
+// When both parties declare regulatory contexts, the governance agent
+// applies the UNION of obligations, the stricter constraint wins for
+// any given (category, dimension) pair.
+message RegulatoryContext {
+  // The regulatory framework. REQUIRED.
+  RegulatoryFramework framework = 1;
+
+  // The specific role the declaring party plays under this framework.
+  // REQUIRED. Examples: "data_controller", "data_processor",
+  // "covered_entity", "business_associate", "merchant", "deployer".
+  string role = 2;
+
+  // Specific obligations this framework imposes in this context.
+  // REQUIRED. At least one obligation must be declared.
+  repeated ComplianceObligation obligations = 3;
+
+  // ISO 3166-1 alpha-2 country/region codes where this framework
+  // applies (e.g. "EU", "US", "US-CA"). OPTIONAL.
+  repeated string jurisdictions = 4;
+
+  // Whether this framework requires notification to the principal
+  // at ALL escalation tiers (not just HUMAN_REQUIRED). OPTIONAL.
+  // The EU AI Act and some GDPR interpretations require this.
+  bool always_notify_principal = 5;
+}
+
