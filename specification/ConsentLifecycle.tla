@@ -26,6 +26,7 @@
  *   S3  AdherenceAnchored
  *   S4  SkillRequiresPermit
  *   S5  ConditionalGating
+ *   S6  NoDisputedPermit
  *   S7  NoSkillOnCapabilityDrift
  *   S8  GovernanceAlwaysReviews — no re-consent bypasses governance
  *   S9  HumanRequiredHonoured  — human_required tier blocks until human acts
@@ -412,6 +413,14 @@ ConditionalGating ==
     \A i \in 1..Len(adherenceTrail):
         (adherenceTrail[i]).disputed = TRUE =>
             (adherenceTrail[i]).decision \in {"deny", "escalate"}
+
+(* S6: No adherence event for a disputed claim carries a permit decision.
+   Logically equivalent to S5 but stated as a direct prohibition on
+   permit for disputed claims. Both are verified independently. *)
+NoDisputedPermit ==
+    \A i \in 1..Len(adherenceTrail):
+        (adherenceTrail[i]).disputed = TRUE =>
+            (adherenceTrail[i]).decision # "permit"
 
 (* S7: No skill call on capability drift. *)
 NoSkillOnCapabilityDrift ==

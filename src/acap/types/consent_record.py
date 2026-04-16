@@ -1,4 +1,4 @@
-# Copyright 2026 the ACAP Authors
+# Copyright 2026 Ravi Kiran Kadaboina
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -87,8 +87,8 @@ class ConsentRecord(BaseModel):
 
     Legal note: under UETA §14, the human principal identified by
     principal_id is bound by this record. The chain is the mechanism by which
-    agents protect their principals from unknown ToS liability: each record
-    proves the agent parsed and reasoned about the terms before acting.
+    agents protect their principals from unknown usage policy liability: each
+    record proves the agent parsed and reasoned about the policy before acting.
 
     Records SHOULD be stored by both parties and submitted to a neutral
     audit endpoint (acceptance_endpoint on the UsagePolicyRef).

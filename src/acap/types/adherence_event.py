@@ -1,4 +1,4 @@
-# Copyright 2026 the ACAP Authors
+# Copyright 2026 Ravi Kiran Kadaboina
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -23,7 +23,7 @@ singly-linked list (via prev_event_id) constituting the proof-of-adherence
 trail: a per-action audit record that documents WHICH clause was evaluated,
 WHAT decision was reached, and WHY the agent reached it.
 
-This advances beyond human ToS acceptance ("I clicked agree") to a
+This advances beyond human consent acceptance ("I clicked agree") to a
 clause-level reasoning record that agents can produce and humans cannot.
 """
 

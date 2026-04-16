@@ -255,7 +255,7 @@ for the results obtained by the use of that tool."
 
 This has two consequences for A2A systems:
 
-1. When Agent A calls Agent B and implicitly accepts Agent B's ToS, Agent
+1. When Agent A calls Agent B and implicitly accepts Agent B's usage policy, Agent
    A's principal is legally bound—without necessarily being aware.
 2. When Agent A calls Agent B and the interaction causes harm, the
    principal cannot claim ignorance of the terms if the agent processed them.

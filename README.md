@@ -137,14 +137,22 @@ record = ConsentRecord(
 ```
 ACAP/
 ├── specification/
-│   └── consent.proto          # Normative proto3 definition (source of truth)
+│   ├── consent.proto          # Normative proto3 definition (source of truth)
+│   ├── ConsentLifecycle.tla   # TLA+ model of the consent lifecycle
+│   └── ConsentLifecycle.cfg   # TLC configuration
 ├── docs/
 │   ├── specification.md       # Full protocol specification
 │   └── topics/                # Conceptual deep-dives
-├── src/acap/types/            # Pydantic type library (Python)
-│   ├── policy_document.py     # PolicyDocument, PolicyClaim, UsagePolicyRef
-│   ├── consent_record.py      # ConsentRecord, ParsedClaim
-│   └── adherence_event.py     # AdherenceEvent, CheckAdherence*
+├── src/acap/
+│   ├── types/                 # Pydantic type library (Python)
+│   │   ├── policy_document.py
+│   │   ├── consent_record.py
+│   │   └── adherence_event.py
+│   └── validators/            # Reference validators for chain + trail integrity
+│       ├── hash.py            # Canonical JSON + SHA-256 for PolicyDocument
+│       ├── chain.py           # ConsentRecord chain validator (§3.2)
+│       └── trail.py           # AdherenceEvent trail validator (§3.3–§3.4)
+├── tests/                     # pytest suite for the validators
 ├── samples/python/            # Reference agent.json with usage_policy
 └── adrs/                      # Architecture Decision Records
     ├── 001-usage-policy-as-agent-card-extension.md
@@ -159,6 +167,31 @@ model checker. TLC exhaustively explores the state space within declared
 constants (e.g. `MaxAgents`, `MaxVersions`) but does **not** constitute a
 proof for arbitrary values. Unbounded verification would require a theorem
 prover such as TLAPS.
+
+## Reference Validators
+
+The Python package under `src/acap/validators/` implements the integrity
+checks described in the paper. These are deliberately small — enough to
+prove every normative claim has working code, without committing to a
+full RPC implementation.
+
+```bash
+python -m venv .venv && source .venv/bin/activate
+pip install -e ".[test]"
+pytest
+```
+
+Scope:
+
+- `hash.py` — canonical JSON + SHA-256 (§3.1), with the hash-field-zeroing
+  convention to break the self-reference.
+- `chain.py` — `ConsentRecord` chain validator (§3.2). Checks link integrity,
+  same-pair invariant, full claim coverage, and hash match.
+- `trail.py` — `AdherenceEvent` trail validator (§3.3–§3.4). Checks link
+  integrity, S5/S6 (no permit on disputed claims), and claim-id sanity.
+
+Signature verification (JWS) is out of scope for v0.1; see §6.1 on the
+threat model.
 
 The TLA+ specification is described in the companion paper
 ([Anumati](https://arxiv.org/abs/2503.XXXXX), §5).
