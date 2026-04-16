@@ -14,8 +14,24 @@ This repository is organised into two tiers:
 - **Core** (this repository root), the three consent primitives, the
   TLA+ specification, the protobuf schema, and the reference Python
   implementation. Stable, tested, citable.
-- **[Extensions](./extensions/)**, proposed extensions (governance
-  tiering, category preferences, regulatory context, audit projection).
+- **[Extensions](./extensions/)**, four proposed extensions each with a
+  declared scope, stable URI, and first-publication date (all
+  2026-04-16):
+  - [governance-tiering](./extensions/governance-tiering/), tiered
+    escalation of policy-version bumps by materiality, with an optional
+    `governance_agent` recorded in the consent chain
+  - [category-preferences](./extensions/category-preferences/),
+    principal-declared asymmetric sensitivity across a
+    data-category x usage-dimension grid, per callee
+  - [regulatory-context](./extensions/regulatory-context/), the
+    machine-readable envelope by which jurisdictional floors (HIPAA,
+    GDPR, PCI-DSS, CCPA, EU AI Act) travel through the consent chain;
+    each industry playbook plugs in without ACAP encoding its legal
+    content
+  - [audit-projection](./extensions/audit-projection/), regulator-facing
+    human-readable projection of the chain and trail, sufficient for
+    GDPR Recital 71 disclosures and EU AI Act Annex IV documentation
+
   Each extension is maintained independently with its own `README.md`
   and `STATUS.md`. Extensions are not part of the published core spec
   and may change.
