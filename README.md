@@ -1,7 +1,7 @@
 # Agent Consent and Adherence Protocol (ACAP)
 
 **Status:** Draft v0.1.0
-**Paper:** [Anumati: Proof of Adherence as a Formal Consent Model for Autonomous Agent Protocols](https://doi.org/10.5281/zenodo.18950892)
+**Paper:** [Anumati: Proof of Adherence as a Formal Consent Model for Autonomous Agent Protocols](https://doi.org/10.5281/zenodo.19606339)
 **Extension URI:** `https://github.com/ravikiran438/agent-consent-protocol/v1`
 **License:** Apache 2.0
 
@@ -199,7 +199,7 @@ Signature verification (JWS) is out of scope for v0.1; see §6.1 on the
 threat model.
 
 The TLA+ specification is described in the companion paper
-([Anumati](https://doi.org/10.5281/zenodo.18950892), §3.5).
+([Anumati](https://doi.org/10.5281/zenodo.19606339), §3.5).
 
 ## Contributing
 
