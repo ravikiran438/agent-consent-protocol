@@ -47,8 +47,9 @@ identity, communications, minor/dependent, operational.
 decision, training, aggregation, cross-context use, deletion/portability.
 
 Both vocabularies are intentionally coarse, fine-grained classification
-stays in the ODRL-aligned `action` and `asset` fields. The goal is a
-vocabulary a human can reason about without understanding ODRL.
+stays in the [ODRL 2.2](https://www.w3.org/TR/odrl-model/)-aligned
+`action` and `asset` fields. The goal is a vocabulary a human can
+reason about without understanding ODRL.
 
 ## Why it's separated from Core
 

@@ -26,6 +26,85 @@ import "consent.proto";
 // Category Preferences (principal-defined sensitivity)
 // ─────────────────────────────────────────────────────────────────────────────
 
+// DataCategory is the kind of data the human principal cares about. The
+// vocabulary is intentionally coarse so a human can reason about it without
+// understanding the ODRL-aligned asset vocabulary; fine-grained classification
+// continues to live in PolicyClaim.asset.
+enum DataCategory {
+  DATA_CATEGORY_UNSPECIFIED = 0;
+
+  // Fingerprints, face scans, voiceprints, iris patterns, gait, or any
+  // signal that uniquely identifies a body.
+  DATA_CATEGORY_BIOMETRIC = 1;
+
+  // Clinical data, diagnoses, prescriptions, wearable readings, mental
+  // health, reproductive health.
+  DATA_CATEGORY_HEALTH = 2;
+
+  // Bank accounts, card numbers, income, credit score, tax records,
+  // transaction histories.
+  DATA_CATEGORY_FINANCIAL = 3;
+
+  // GPS trace, home address, place-of-work, visited locations, cell
+  // tower triangulation.
+  DATA_CATEGORY_LOCATION = 4;
+
+  // Click stream, watch history, app usage patterns, scroll telemetry,
+  // dwell time.
+  DATA_CATEGORY_BEHAVIORAL = 5;
+
+  // Legal name, government ID, date of birth, citizenship, marital
+  // status.
+  DATA_CATEGORY_IDENTITY = 6;
+
+  // Email content, chat logs, phone-call transcripts, contacts list,
+  // voicemail.
+  DATA_CATEGORY_COMMUNICATIONS = 7;
+
+  // Data about a minor, a legally dependent adult, or anyone for whom
+  // the principal is a guardian.
+  DATA_CATEGORY_MINOR_OR_DEPENDENT = 8;
+
+  // Non-personal operational metadata (session ids, request counts,
+  // error logs, cache keys).
+  DATA_CATEGORY_OPERATIONAL = 9;
+}
+
+// UsageDimension is the kind of operation the callee wants to perform on
+// data in a given category. Coarse on purpose, for the same reason as
+// DataCategory.
+enum UsageDimension {
+  USAGE_DIMENSION_UNSPECIFIED = 0;
+
+  // Persisting the data beyond the immediate request.
+  USAGE_DIMENSION_STORAGE = 1;
+
+  // Retrieving or reading the data from a store.
+  USAGE_DIMENSION_ACCESS = 2;
+
+  // Transmitting the data to a party outside the direct caller-callee
+  // relationship.
+  USAGE_DIMENSION_THIRD_PARTY_SHARING = 3;
+
+  // Using the data as input to an automated decision (eligibility,
+  // pricing, routing, triage).
+  USAGE_DIMENSION_AUTOMATED_DECISION = 4;
+
+  // Using the data to train or fine-tune a model.
+  USAGE_DIMENSION_TRAINING = 5;
+
+  // Combining the data with other records to produce derived statistics
+  // or profiles.
+  USAGE_DIMENSION_AGGREGATION = 6;
+
+  // Using the data for a purpose other than the one under which it was
+  // collected.
+  USAGE_DIMENSION_CROSS_CONTEXT_USE = 7;
+
+  // Supporting the principal's right to delete or port the data.
+  USAGE_DIMENSION_DELETION_OR_PORTABILITY = 8;
+}
+
 // CategorySensitivity expresses the human principal's sensitivity level for
 // a given data category. The governance agent uses these preferences when
 // evaluating materiality: a claim in a HIGH sensitivity category is always

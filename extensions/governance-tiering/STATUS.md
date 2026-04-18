@@ -1,6 +1,6 @@
 # Governance Tiering: Status
 
-**Stage:** Design proposal
+**Stage:** Reference implementation
 **Extension URI:** https://github.com/ravikiran438/agent-consent-protocol/extensions/governance-tiering/v1
 **First published:** 2026-04-16
 **Depends on:** ACAP Core v0.1+
@@ -8,6 +8,10 @@
 **License:** Apache 2.0
 
 ## Scope
+
+See `motivation.md` for the problem framing, the alternatives
+considered, and the design rationale. What follows is the engineering
+summary.
 
 This extension defines how policy-version bumps in ACAP are tiered by
 materiality so that immaterial changes (typos, clause renumbering,
@@ -43,17 +47,39 @@ classification decisions are themselves recorded in the consent chain.
 ## What exists today
 
 - Design sketch in `README.md`
-- Draft of the five materiality criteria
-- Informal exploration of auto / reviewed / required tier classification
+- TLA+ specification of the escalation state machine, invariants S8
+  (`GovernanceAlwaysReviews`) and S9 (`HumanRequiredHonoured`), in
+  `specification/ConsentLifecycle.tla` at the repository root (modelled
+  jointly with Core because the tiered flow adds a `GovernanceReview`
+  state)
+- Protobuf schema for `ClaimDiff`, `PolicyDiff`, `EscalationTier`,
+  `MaterialitySignal`, `EscalationAssessment`, `DelegationHop`, and
+  `DelegationChain` in `consent.governance.proto`
+- Python reference types (`types.py`), mirroring the proto
+- Reference governance-agent SDK (`materiality.py`) with six structural
+  signals: `new_claim`, `removed_claim`, `modified_claim`,
+  `rule_type_inversion`, `constraint_relaxed`, `escalate_on_deny_added`.
+  The tier mapping is hardcoded in the reference: the last four force
+  `HUMAN_REQUIRED`, `new_claim` and `modified_claim` force at least
+  `GOVERNANCE_REVIEWED`. Downstream agents that want a different policy
+  override `classify` rather than configuring this one.
+- Runtime validators (`validator.py`) for `EscalationAssessment` (checks
+  the S9 human-review invariant) and `DelegationChain` (checks
+  contiguity and origin anchoring)
+- Test suite (24 tests under `tests/extensions/test_governance_tiering.py`)
+  covering diff computation, classifier tier selection, and validator
+  invariants
 
 ## What is open
 
-- Formal TLA+ specification of the escalation state machine
-- Protobuf schema for `EscalationAssessment`, `MaterialitySignal`,
-  `EscalationTier`, `DelegationChain`
-- Reference implementation of a governance-agent SDK
+- AgentCard advertisement convention for governance-agent endpoints,
+  how a caller discovers and authenticates a governance agent
+- LLM-assisted semantic classifier that can judge "relaxed vs
+  tightened" constraints beyond the current length heuristic
 - Empirical evaluation: does tiering actually reduce alert fatigue in
   a pilot deployment?
+- Graduation of S8 and S9 into a standalone TLA+ module once the
+  extension is adopted by a second implementation
 
 ## Not in scope
 

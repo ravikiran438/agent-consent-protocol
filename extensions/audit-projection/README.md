@@ -52,7 +52,10 @@ alternative renderings emerge without bloating the protocol.
 ## Relevance to regulation
 
 The chronological timeline and per-claim summaries provide the kind of
-"meaningful information about the logic involved" that GDPR Recital 71
-and Art. 13(2)(f) / 14(2)(g) contemplate for automated decision-making
-under Art. 22. This extension exists in large part to make that
-compliance story concrete.
+"meaningful information about the logic involved" that
+[GDPR Recital 71](https://gdpr-info.eu/recitals/no-71/) and
+[Art. 13(2)(f)](https://gdpr-info.eu/art-13-gdpr/) /
+[14(2)(g)](https://gdpr-info.eu/art-14-gdpr/) contemplate for
+automated decision-making under
+[Art. 22](https://gdpr-info.eu/art-22-gdpr/). This extension exists
+in large part to make that compliance story concrete.

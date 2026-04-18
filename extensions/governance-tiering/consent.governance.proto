@@ -185,3 +185,62 @@ message EscalationAssessment {
   optional string governance_signature = 9;
 }
 
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Delegation Chain (for multi-hop A → B → C consent paths)
+// ─────────────────────────────────────────────────────────────────────────────
+
+// DelegationHop records a single caller→callee edge in a multi-hop consent
+// path, together with the escalation tier that governed re-consent at that
+// hop. Enables auditors to walk the chain and see which hops required human
+// attention and which were auto-approved.
+//
+// The per-hop tier is independent: Agent A may auto-approve for its call to
+// Agent B, while Agent B's call to Agent C may require human review, because
+// the materiality assessment is performed relative to each principal's
+// governance meta-policy.
+message DelegationHop {
+  // DID or HTTPS URL of the caller at this hop. REQUIRED.
+  string caller_agent_id = 1;
+
+  // DID or HTTPS URL of the callee at this hop. REQUIRED.
+  string callee_agent_id = 2;
+
+  // record_id of the ConsentRecord governing this hop. REQUIRED.
+  string consent_record_id = 3;
+
+  // Escalation tier applied at this hop. REQUIRED. ESCALATION_TIER_UNSPECIFIED
+  // is valid for the first-ever consent (no prior record to diff against).
+  EscalationTier tier = 4;
+
+  // DID or HTTPS URL identifying the human principal on whose behalf the
+  // caller at this hop is acting. OPTIONAL.
+  optional string principal_id = 5;
+}
+
+// DelegationChain captures an Agent A → Agent B → Agent C (or longer)
+// invocation path. Each hop is tiered independently; the chain lets an
+// auditor reason about end-to-end consent without re-walking every pair's
+// ConsentRecord history.
+//
+// The chain is ordered origin-first: chain.hops[0] is the originating
+// agent's invocation; chain.hops[-1] is the terminal invocation.
+message DelegationChain {
+  // DID or HTTPS URL of the originating human principal. REQUIRED.
+  // The delegation chain exists to account for actions taken on this
+  // principal's behalf, so the identity is anchoring.
+  string origin_principal_id = 1;
+
+  // Ordered list of hops, origin-first. REQUIRED. At least one hop.
+  repeated DelegationHop hops = 2;
+
+  // record_id of the ConsentRecord at the first hop. REQUIRED. Present as
+  // a top-level pointer so an auditor can anchor the chain without scanning
+  // the hops array.
+  string origin_consent_record_id = 3;
+
+  // ISO 8601 UTC datetime when the chain was assembled (usually by the
+  // originating caller before its first hop). REQUIRED.
+  string assembled_at = 4;
+}
+

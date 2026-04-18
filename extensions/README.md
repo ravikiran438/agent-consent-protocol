@@ -26,10 +26,10 @@ separate it from ACAP Core and from the other extensions.
 
 | Extension | Stage | First published | Scope (one sentence) |
 |---|---|---|---|
-| [governance-tiering](./governance-tiering/) | Design proposal | 2026-04-16 | Tiered escalation of ACAP policy-version bumps by materiality, with an optional `governance_agent` whose classification decisions are themselves recorded in the consent chain. |
-| [category-preferences](./category-preferences/) | Design proposal | 2026-04-16 | Principal-declared asymmetric sensitivity across a data-category x usage-dimension grid, travelling with the `ConsentRecord` per callee. |
-| [regulatory-context](./regulatory-context/) | Design proposal | 2026-04-16 | Machine-readable envelope by which jurisdictional floors (HIPAA, GDPR, PCI-DSS, CCPA, EU AI Act) travel through the consent chain; each industry playbook plugs in without ACAP encoding its legal content. |
-| [audit-projection](./audit-projection/) | Design proposal | 2026-04-16 | Regulator-facing human-readable projection of the ACAP consent chain and adherence trail, sufficient for GDPR Recital 71 disclosures and EU AI Act Annex IV documentation. |
+| [governance-tiering](./governance-tiering/) | Reference implementation | 2026-04-16 | Tiered escalation of ACAP policy-version bumps by materiality, with an optional `governance_agent` whose classification decisions are themselves recorded in the consent chain. |
+| [category-preferences](./category-preferences/) | Reference implementation | 2026-04-16 | Principal-declared asymmetric sensitivity across a data-category x usage-dimension grid, travelling with the `ConsentRecord` per callee. |
+| [regulatory-context](./regulatory-context/) | Reference implementation (envelope); per-framework mappings blocked on legal review | 2026-04-16 | Machine-readable envelope by which jurisdictional floors ([HIPAA](https://www.hhs.gov/hipaa/index.html), [GDPR](https://gdpr-info.eu/), [PCI-DSS](https://www.pcisecuritystandards.org/), [CCPA](https://oag.ca.gov/privacy/ccpa), [EU AI Act](https://digital-strategy.ec.europa.eu/en/policies/regulatory-framework-ai)) travel through the consent chain; each industry playbook plugs in without ACAP encoding its legal content. |
+| [audit-projection](./audit-projection/) | Reference implementation | 2026-04-16 | Regulator-facing human-readable projection of the ACAP consent chain and adherence trail, sufficient for [GDPR Recital 71](https://gdpr-info.eu/recitals/no-71/) disclosures and [EU AI Act Annex IV](https://artificialintelligenceact.eu/annex/4/) documentation. |
 
 ## Contributing
 

@@ -1,7 +1,12 @@
 # Regulatory Context Extension
 
 An extension to Anumati Core that propagates **jurisdictional
-obligations** (GDPR, HIPAA, PCI-DSS, CCPA, EU AI Act, COPPA, …)
+obligations** ([GDPR](https://gdpr-info.eu/),
+[HIPAA](https://www.hhs.gov/hipaa/index.html),
+[PCI-DSS](https://www.pcisecuritystandards.org/),
+[CCPA](https://oag.ca.gov/privacy/ccpa),
+[EU AI Act](https://digital-strategy.ec.europa.eu/en/policies/regulatory-framework-ai),
+[COPPA](https://www.ftc.gov/legal-library/browse/rules/childrens-online-privacy-protection-rule-coppa), …)
 through the consent chain, independent of what any single party's
 policy permits.
 
@@ -34,7 +39,9 @@ compliance context). Each context declares:
 
 When both parties declare regulatory contexts, the stricter constraint
 wins. A principal who "doesn't care" about third-party sharing cannot
-lower a callee's HIPAA §164.502(b) floor.
+lower a callee's
+[HIPAA §164.502(b)](https://www.ecfr.gov/current/title-45/subtitle-A/subchapter-C/part-164/subpart-E/section-164.502)
+floor.
 
 ## Why a legal co-author is required before this ships
 
@@ -44,10 +51,13 @@ normatively:
 
 - A compliance engineer or healthcare-law specialist needs to review
   the HIPAA → (category, dimension) translation
-- A data-protection lawyer needs to review the GDPR Art. 28 / 44-49 /
-  22 mappings
-- The EU AI Act claims need checking against the Article 50 deployer
-  obligations
+- A data-protection lawyer needs to review the
+  [GDPR Art. 28](https://gdpr-info.eu/art-28-gdpr/) /
+  [Art. 44-49](https://gdpr-info.eu/chapter-5/) /
+  [Art. 22](https://gdpr-info.eu/art-22-gdpr/) mappings
+- The EU AI Act claims need checking against the
+  [Article 50](https://artificialintelligenceact.eu/article/50/)
+  deployer obligations
 
 Without expert review, shipping this as a normative protocol extension
 would be overreach.
