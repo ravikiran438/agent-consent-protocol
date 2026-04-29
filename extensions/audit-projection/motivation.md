@@ -198,4 +198,4 @@ The regulatory touchpoints informing the report's structure:
 [GDPR Art. 22](https://gdpr-info.eu/art-22-gdpr/), and
 [EU AI Act Annex IV](https://artificialintelligenceact.eu/annex/4/).
 For the Core ACAP specification this extension builds on, see the
-paper at [Zenodo DOI 10.5281/zenodo.19606339](https://doi.org/10.5281/zenodo.19606339).
+paper at [arXiv:2604.16524](https://arxiv.org/abs/2604.16524) (also [Zenodo DOI 10.5281/zenodo.19606339](https://doi.org/10.5281/zenodo.19606339)).

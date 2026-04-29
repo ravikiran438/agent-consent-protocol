@@ -221,4 +221,4 @@ The frameworks this extension's envelope is designed to carry:
 such as [42 CFR Part 2](https://www.ecfr.gov/current/title-42/chapter-I/subchapter-A/part-2)
 and [MiFID II](https://eur-lex.europa.eu/eli/dir/2014/65/oj). For the
 Core ACAP specification this extension builds on, see the paper at
-[Zenodo DOI 10.5281/zenodo.19606339](https://doi.org/10.5281/zenodo.19606339).
+[arXiv:2604.16524](https://arxiv.org/abs/2604.16524) (also [Zenodo DOI 10.5281/zenodo.19606339](https://doi.org/10.5281/zenodo.19606339)).

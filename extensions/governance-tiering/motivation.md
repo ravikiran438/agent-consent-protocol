@@ -190,4 +190,4 @@ which proposes an external governance agent supervising other agents
 at runtime. The [AIGA Internet-Draft](https://datatracker.ietf.org/doc/draft-aylward-aiga-1/)
 proposes complementary accountability primitives. For the Core ACAP
 specification this extension builds on, see the paper at
-[Zenodo DOI 10.5281/zenodo.19606339](https://doi.org/10.5281/zenodo.19606339).
+[arXiv:2604.16524](https://arxiv.org/abs/2604.16524) (also [Zenodo DOI 10.5281/zenodo.19606339](https://doi.org/10.5281/zenodo.19606339)).
