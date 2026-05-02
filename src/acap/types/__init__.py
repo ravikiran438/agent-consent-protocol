@@ -31,6 +31,7 @@ from acap.types.consent_record import (
     ParsedClaim,
 )
 from acap.types.policy_document import (
+    ACAP_EXTENSION_URI,
     PolicyClaim,
     PolicyDocument,
     RuleType,
@@ -39,6 +40,7 @@ from acap.types.policy_document import (
 
 __all__ = [
     # Policy document
+    "ACAP_EXTENSION_URI",
     "PolicyDocument",
     "PolicyClaim",
     "RuleType",

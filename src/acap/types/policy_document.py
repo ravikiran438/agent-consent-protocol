@@ -144,6 +144,10 @@ class PolicyDocument(BaseModel):
     )
 
 
+# Stable identifier published on AgentCard.capabilities.extensions[].uri.
+ACAP_EXTENSION_URI = "https://github.com/ravikiran438/agent-consent-protocol/v1"
+
+
 class UsagePolicyRef(BaseModel):
     """Pointer to a callee agent's PolicyDocument, embedded in the A2A AgentCard.
 
@@ -154,7 +158,7 @@ class UsagePolicyRef(BaseModel):
           "capabilities": {
             "extensions": [
               {
-                "uri": "https://a2aproject.github.io/consent/v1",
+                "uri": "https://github.com/ravikiran438/agent-consent-protocol/v1",
                 "description": "Supports the Agent Consent and Adherence Protocol.",
                 "required": true
               }

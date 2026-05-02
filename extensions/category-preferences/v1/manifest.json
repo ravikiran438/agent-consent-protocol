@@ -1,0 +1,20 @@
+{
+  "manifest_version": "1.0.0",
+  "extension": {
+    "uri": "https://github.com/ravikiran438/agent-consent-protocol/extensions/category-preferences/v1",
+    "name": "ACAP Category-Preferences Extension",
+    "description": "Per-category sensitivity preferences for human principals.",
+    "version": "1.0.0",
+    "publisher": "Ravi Kiran Kadaboina"
+  },
+  "agent_card_payload_schema": {
+    "type": "object",
+    "title": "OpaquePayload",
+    "description": "This extension declares itself by URI presence and does not constrain the AgentCard payload. Validators accept any object.",
+    "additionalProperties": true
+  },
+  "wire_artefacts": [],
+  "invariants": [
+    "Each DataCategory has at most one declared sensitivity per principal."
+  ]
+}

@@ -48,6 +48,7 @@ async def test_server_lists_tools_over_stdio():
         "compute_floor",
         "generate_audit_report",
         "validate_audit_report",
+        "validate_usage_policy_ref",
     }
     assert names == expected
 

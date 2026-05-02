@@ -46,6 +46,7 @@ from acap.types import (
     AdherenceEvent,
     ConsentRecord,
     PolicyDocument,
+    UsagePolicyRef,
 )
 from acap.validators import (
     ChainValidationError,
@@ -254,6 +255,21 @@ TOOL_SCHEMAS: dict[str, dict[str, Any]] = {
             "required": ["report"],
         },
     },
+    "validate_usage_policy_ref": {
+        "description": (
+            "Validate a UsagePolicyRef payload (the body of the "
+            "AgentCard.capabilities.extensions[] entry whose URI equals "
+            "the ACAP extension URI). Verifies the structural shape: "
+            "version, document_uri, document_hash format, "
+            "effective_date, acceptance_required + acceptance_endpoint "
+            "coherence, natural_language_uri presence."
+        ),
+        "inputSchema": {
+            "type": "object",
+            "properties": {"ref": {"type": "object"}},
+            "required": ["ref"],
+        },
+    },
 }
 
 
@@ -432,6 +448,33 @@ def handle_validate_audit_report(arguments: dict[str, Any]) -> str:
     return _ok({"timeline_entries": len(report.timeline)})
 
 
+def handle_validate_usage_policy_ref(arguments: dict[str, Any]) -> str:
+    payload = arguments.get("ref")
+    if not isinstance(payload, dict):
+        raise ToolInvocationError("expected object under key 'ref'")
+    ref = _parse(UsagePolicyRef, payload, "ref")
+
+    # document_hash format: "sha256:<64-hex>"
+    h = ref.document_hash
+    if not (h.startswith("sha256:") and len(h) == len("sha256:") + 64):
+        return _fail(
+            f"document_hash {h!r} is not a sha256:<64-hex> value"
+        )
+    try:
+        int(h[len("sha256:"):], 16)
+    except ValueError:
+        return _fail(
+            f"document_hash {h!r} hex part is not valid hex"
+        )
+
+    # When acceptance_required is true, the acceptance_endpoint MUST be set.
+    if ref.acceptance_required and not ref.acceptance_endpoint:
+        return _fail(
+            "acceptance_required=true requires an acceptance_endpoint"
+        )
+    return _ok({"ref": "valid"})
+
+
 HANDLERS: dict[str, Any] = {
     "validate_consent_chain": handle_validate_consent_chain,
     "validate_adherence_trail": handle_validate_adherence_trail,
@@ -441,6 +484,7 @@ HANDLERS: dict[str, Any] = {
     "compute_floor": handle_compute_floor,
     "generate_audit_report": handle_generate_audit_report,
     "validate_audit_report": handle_validate_audit_report,
+    "validate_usage_policy_ref": handle_validate_usage_policy_ref,
 }
 
 

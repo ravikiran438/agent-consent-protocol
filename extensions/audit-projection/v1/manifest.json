@@ -1,0 +1,20 @@
+{
+  "manifest_version": "1.0.0",
+  "extension": {
+    "uri": "https://github.com/ravikiran438/agent-consent-protocol/extensions/audit-projection/v1",
+    "name": "ACAP Audit-Projection Extension",
+    "description": "Compact projections of ACAP consent + adherence chains for auditors.",
+    "version": "1.0.0",
+    "publisher": "Ravi Kiran Kadaboina"
+  },
+  "agent_card_payload_schema": {
+    "type": "object",
+    "title": "OpaquePayload",
+    "description": "This extension declares itself by URI presence and does not constrain the AgentCard payload. Validators accept any object.",
+    "additionalProperties": true
+  },
+  "wire_artefacts": [],
+  "invariants": [
+    "Projections MUST preserve the cryptographic anchor of the source chain."
+  ]
+}
