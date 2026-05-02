@@ -2,7 +2,7 @@
 
 **Status:** Draft v0.1.0
 **Paper:** [Anumati: Proof of Adherence as a Formal Consent Model for Autonomous Agent Protocols](https://arxiv.org/abs/2604.16524) ([arXiv:2604.16524](https://arxiv.org/abs/2604.16524) · [Zenodo DOI 10.5281/zenodo.19606339](https://doi.org/10.5281/zenodo.19606339))
-**Extension URI:** `https://github.com/ravikiran438/agent-consent-protocol/v1`
+**Extension URI:** `https://ravikiran438.github.io/agent-consent-protocol/v1`
 **License:** Apache 2.0
 
 ACAP extends the [Agent2Agent (A2A) Protocol](https://a2a-protocol.org/latest/)
@@ -88,7 +88,7 @@ acting and here is my reasoning").
   "capabilities": {
     "extensions": [
       {
-        "uri": "https://github.com/ravikiran438/agent-consent-protocol/v1",
+        "uri": "https://ravikiran438.github.io/agent-consent-protocol/v1",
         "description": "Supports the Agent Consent and Adherence Protocol.",
         "required": true
       }
@@ -216,6 +216,31 @@ threat model.
 
 The TLA+ specification is described in the companion paper
 ([Anumati](https://arxiv.org/abs/2604.16524), §3.5).
+
+## Extension Manifest
+
+This repository publishes a JSON-Schema manifest describing the
+AgentCard payload an ACAP-aware agent declares under
+`capabilities.extensions[]`:
+
+- Machine-readable: [`v1/manifest.json`](v1/manifest.json)
+- Human-readable: [`v1/SPEC.md`](v1/SPEC.md)
+- Extension URI: `https://ravikiran438.github.io/agent-consent-protocol/v1`
+
+Sub-extensions follow the same layout under `extensions/<name>/v1/`:
+
+| Extension | Manifest | Spec |
+|---|---|---|
+| governance-tiering | [manifest.json](extensions/governance-tiering/v1/manifest.json) | [SPEC.md](extensions/governance-tiering/v1/SPEC.md) |
+| category-preferences | [manifest.json](extensions/category-preferences/v1/manifest.json) | [SPEC.md](extensions/category-preferences/v1/SPEC.md) |
+| regulatory-context | [manifest.json](extensions/regulatory-context/v1/manifest.json) | [SPEC.md](extensions/regulatory-context/v1/SPEC.md) |
+| audit-projection | [manifest.json](extensions/audit-projection/v1/manifest.json) | [SPEC.md](extensions/audit-projection/v1/SPEC.md) |
+
+The manifest is exploratory: A2A 1.0 does not yet prescribe a schema-
+discovery convention for extensions. This repository ships the
+manifest as a reference implementation; a generic validator can fetch
+the JSON and validate any declared payload without protocol-specific
+code.
 
 ## Contributing
 

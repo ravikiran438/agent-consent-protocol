@@ -1,7 +1,7 @@
 # Regulatory Context: Status
 
 **Stage:** Reference implementation (envelope only); per-framework mappings blocked on qualified legal review
-**Extension URI:** https://github.com/ravikiran438/agent-consent-protocol/extensions/regulatory-context/v1
+**Extension URI:** https://ravikiran438.github.io/agent-consent-protocol/extensions/regulatory-context/v1
 **First published:** 2026-04-16
 **Depends on:** ACAP Core v0.1+, Category Preferences Extension (for the obligation-encoding grid)
 **Maintainer:** Ravi Kiran Kadaboina (@ravikiran438)

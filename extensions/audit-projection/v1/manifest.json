@@ -1,7 +1,7 @@
 {
   "manifest_version": "1.0.0",
   "extension": {
-    "uri": "https://github.com/ravikiran438/agent-consent-protocol/extensions/audit-projection/v1",
+    "uri": "https://ravikiran438.github.io/agent-consent-protocol/extensions/audit-projection/v1",
     "name": "ACAP Audit-Projection Extension",
     "description": "Compact projections of ACAP consent + adherence chains for auditors.",
     "version": "1.0.0",

@@ -14,7 +14,7 @@ from __future__ import annotations
 def test_acap_core_extension_uri():
     from acap.types import ACAP_EXTENSION_URI
     assert ACAP_EXTENSION_URI == (
-        "https://github.com/ravikiran438/agent-consent-protocol/v1"
+        "https://ravikiran438.github.io/agent-consent-protocol/v1"
     )
 
 

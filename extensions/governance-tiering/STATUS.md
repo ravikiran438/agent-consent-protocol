@@ -1,7 +1,7 @@
 # Governance Tiering: Status
 
 **Stage:** Reference implementation
-**Extension URI:** https://github.com/ravikiran438/agent-consent-protocol/extensions/governance-tiering/v1
+**Extension URI:** https://ravikiran438.github.io/agent-consent-protocol/extensions/governance-tiering/v1
 **First published:** 2026-04-16
 **Depends on:** ACAP Core v0.1+
 **Maintainer:** Ravi Kiran Kadaboina (@ravikiran438)

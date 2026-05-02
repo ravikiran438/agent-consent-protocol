@@ -1,7 +1,7 @@
 {
   "manifest_version": "1.0.0",
   "extension": {
-    "uri": "https://github.com/ravikiran438/agent-consent-protocol/extensions/governance-tiering/v1",
+    "uri": "https://ravikiran438.github.io/agent-consent-protocol/extensions/governance-tiering/v1",
     "name": "ACAP Governance-Tiering Extension",
     "description": "Tiered escalation classifier for ACAP policy version bumps.",
     "version": "1.0.0",

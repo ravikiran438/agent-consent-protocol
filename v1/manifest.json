@@ -1,7 +1,7 @@
 {
   "manifest_version": "1.0.0",
   "extension": {
-    "uri": "https://github.com/ravikiran438/agent-consent-protocol/v1",
+    "uri": "https://ravikiran438.github.io/agent-consent-protocol/v1",
     "name": "Agent Consent and Adherence Protocol",
     "description": "Versioned, machine-readable usage-policy adherence layer for A2A agents.",
     "version": "1.0.0",
@@ -9,7 +9,7 @@
     "human_readable_spec": "https://doi.org/10.5281/zenodo.19606339"
   },
   "agent_card_payload_schema": {
-    "description": "Pointer to a callee agent's PolicyDocument, embedded in the A2A AgentCard.\n\nAdded as a top-level 'usage_policy' field in the AgentCard JSON when the\nACAP extension URI is declared in capabilities.extensions:\n\n    {\n      \"capabilities\": {\n        \"extensions\": [\n          {\n            \"uri\": \"https://github.com/ravikiran438/agent-consent-protocol/v1\",\n            \"description\": \"Supports the Agent Consent and Adherence Protocol.\",\n            \"required\": true\n          }\n        ]\n      },\n      \"usage_policy\": { ... }\n    }\n\nCallers MUST fetch and verify the full PolicyDocument from document_uri\nbefore invoking any skill when acceptance_required is true.",
+    "description": "Pointer to a callee agent's PolicyDocument, embedded in the A2A AgentCard.\n\nAdded as a top-level 'usage_policy' field in the AgentCard JSON when the\nACAP extension URI is declared in capabilities.extensions:\n\n    {\n      \"capabilities\": {\n        \"extensions\": [\n          {\n            \"uri\": \"https://ravikiran438.github.io/agent-consent-protocol/v1\",\n            \"description\": \"Supports the Agent Consent and Adherence Protocol.\",\n            \"required\": true\n          }\n        ]\n      },\n      \"usage_policy\": { ... }\n    }\n\nCallers MUST fetch and verify the full PolicyDocument from document_uri\nbefore invoking any skill when acceptance_required is true.",
     "properties": {
       "version": {
         "description": "Semver of the current PolicyDocument.",

@@ -145,7 +145,7 @@ class PolicyDocument(BaseModel):
 
 
 # Stable identifier published on AgentCard.capabilities.extensions[].uri.
-ACAP_EXTENSION_URI = "https://github.com/ravikiran438/agent-consent-protocol/v1"
+ACAP_EXTENSION_URI = "https://ravikiran438.github.io/agent-consent-protocol/v1"
 
 
 class UsagePolicyRef(BaseModel):
@@ -158,7 +158,7 @@ class UsagePolicyRef(BaseModel):
           "capabilities": {
             "extensions": [
               {
-                "uri": "https://github.com/ravikiran438/agent-consent-protocol/v1",
+                "uri": "https://ravikiran438.github.io/agent-consent-protocol/v1",
                 "description": "Supports the Agent Consent and Adherence Protocol.",
                 "required": true
               }

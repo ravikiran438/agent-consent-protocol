@@ -1,7 +1,7 @@
 {
   "manifest_version": "1.0.0",
   "extension": {
-    "uri": "https://github.com/ravikiran438/agent-consent-protocol/extensions/category-preferences/v1",
+    "uri": "https://ravikiran438.github.io/agent-consent-protocol/extensions/category-preferences/v1",
     "name": "ACAP Category-Preferences Extension",
     "description": "Per-category sensitivity preferences for human principals.",
     "version": "1.0.0",

@@ -15,7 +15,7 @@
   "capabilities": {
     "extensions": [
       {
-        "uri": "https://github.com/ravikiran438/agent-consent-protocol/v1",
+        "uri": "https://ravikiran438.github.io/agent-consent-protocol/v1",
         "description": "Supports ACAP. Calling agents MUST record consent before invoking any skill.",
         "required": true
       }
