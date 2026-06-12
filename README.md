@@ -166,6 +166,7 @@ agent-consent-protocol/
 │   └── specification.md        # Full protocol specification
 ├── src/acap/
 │   ├── types/                  # Pydantic type library
+│   ├── ag_ui/                  # AG-UI (agent↔human) binding
 │   └── validators/             # Hash / chain / trail validators
 ├── tests/                      # pytest suite for the validators
 ├── samples/python/             # Reference agent.json with usage_policy
@@ -216,6 +217,30 @@ threat model.
 
 The TLA+ specification is described in the companion paper
 ([Anumati](https://arxiv.org/abs/2604.16524), §3.5).
+
+## AG-UI Binding
+
+Consent is a human decision, so [AG-UI](https://github.com/ag-ui-protocol/ag-ui)
+— the agent↔human transport — is ACAP's natural carrier alongside A2A and MCP.
+The `acap.ag_ui` module
+([`src/acap/ag_ui/binding.py`](src/acap/ag_ui/binding.py)) projects ACAP's two
+human-in-the-loop moments onto AG-UI:
+
+- **Consent gate.** `policy_state_snapshot(...)` publishes the `PolicyDocument`
+  as a `STATE_SNAPSHOT`; `consent_interrupt(...)` solicits the decision as a
+  `confirmation` (or `tool_call`) interrupt; `resolve_consent(...)` turns the
+  resume into a typed `ConsentRecord` — a rejection is `decision: "rejected"` in
+  the payload, and an abandoned resume fails closed to rejected.
+- **Per-action adherence.** `adherence_event_custom(event)` streams routine
+  `AdherenceEvent`s as `Custom` annotations (proof-of-adherence stays in the
+  transcript); an ambiguous or disputed claim (`escalate`) becomes a
+  `confirmation` interrupt resolved by `resolve_adherence_escalation(...)` into a
+  typed `AdherenceEvent` (fail-closed to deny).
+
+Dependency-free; governance identity travels in `metadata.governance.uri`.
+Follows the cross-cutting *Governance over AG-UI* convention
+(<https://ravikiran438.github.io/agent-protocol-stack/ag-ui/>); see
+[`tests/test_ag_ui_binding.py`](tests/test_ag_ui_binding.py) for worked examples.
 
 ## Extension Manifest
 

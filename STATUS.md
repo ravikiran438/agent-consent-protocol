@@ -10,7 +10,17 @@ tests for `EXTENSION_URI` constants, and a v1 manifest.
 
 ## What works (verified)
 
-- 133 tests passing locally via the shared venv at `../../.venv`.
+- 146 tests passing locally via the shared venv at `../../.venv` (incl. the
+  AG-UI binding suite; in a bare sandbox the 2 `mcp_server` stdio tests are
+  skipped/fail for lack of a stdio peer — unrelated to the protocol).
+- **AG-UI binding** at `acap.ag_ui` (`src/acap/ag_ui/binding.py`): projects
+  ACAP's two human-in-the-loop moments onto the agent↔human transport — the
+  consent gate (`PolicyDocument` snapshot → `confirmation`/`tool_call` interrupt
+  → typed `ConsentRecord`) and per-action adherence (routine `AdherenceEvent`s
+  as `Custom`; an `escalate` becomes an interrupt → typed `AdherenceEvent`,
+  fail-closed to deny). Dependency-free; 13 tests in
+  `tests/test_ag_ui_binding.py`. Follows the cross-cutting *Governance over
+  AG-UI* spec (<https://ravikiran438.github.io/agent-protocol-stack/ag-ui/>).
 - TLA+ model `specification/ConsentLifecycle.tla` checks clean under
   TLC (~4.4M states, depth 17, no invariant violations).
 - MCP server at `acap.mcp_server` exposes 9 validator tools including
@@ -35,7 +45,7 @@ tests for `EXTENSION_URI` constants, and a v1 manifest.
 
 ## Re-page-in checklist (if returning after 2+ weeks)
 
-1. `cd <here> && ../../.venv/bin/python -m pytest -q` — should be 133/133.
+1. `cd <here> && ../../.venv/bin/python -m pytest -q` — should be 146/146.
 2. `java -Xmx4g -cp "$TLA2TOOLS" tlc2.TLC -workers auto -deadlock ConsentLifecycle`
    from `specification/`. Expect "no error" (~4M states).
 3. Re-read `MASTER_STATUS.md` in the testbed for cross-repo context.

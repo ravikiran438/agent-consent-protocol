@@ -16,7 +16,9 @@ registration, transport, and call plumbing work together.
 from __future__ import annotations
 
 import json
+import os
 import sys
+from pathlib import Path
 
 import pytest
 
@@ -25,12 +27,24 @@ pytest.importorskip("mcp")
 from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
 
+# MCP's stdio client launches the server subprocess with a minimal environment
+# that drops PYTHONPATH, so a server run via `python -m acap.mcp_server` can't
+# import `acap` unless the package is pip-installed. Pass the repo's src/ on
+# PYTHONPATH explicitly so the smoke test is green whether or not acap is
+# installed (a harmless no-op when it is).
+_SRC = str(Path(__file__).resolve().parents[2] / "src")
+_ENV = {
+    **os.environ,
+    "PYTHONPATH": os.pathsep.join(p for p in (_SRC, os.environ.get("PYTHONPATH", "")) if p),
+}
+
 
 @pytest.mark.asyncio
 async def test_server_lists_tools_over_stdio():
     params = StdioServerParameters(
         command=sys.executable,
         args=["-m", "acap.mcp_server"],
+        env=_ENV,
     )
 
     async with stdio_client(params) as (read, write):
@@ -58,6 +72,7 @@ async def test_server_call_compute_policy_hash_over_stdio():
     params = StdioServerParameters(
         command=sys.executable,
         args=["-m", "acap.mcp_server"],
+        env=_ENV,
     )
 
     policy = {
